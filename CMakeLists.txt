@@ -5,6 +5,7 @@ set(EXE flipper)
 
 set(IMGUI_ROOT_FOLDER ${CMAKE_SOURCE_DIR}/dependencies/imgui)
 set(GLFW_ROOT_FOLDER ${CMAKE_SOURCE_DIR}/dependencies/glfw)
+set(GLEW_ROOT_FOLDER ${CMAKE_SOURCE_DIR}/dependencies/glew)
 
 include(CTest)
 enable_testing()
@@ -28,18 +29,20 @@ target_include_directories(${EXE}
                 PUBLIC ${IMGUI_ROOT_FOLDER}/misc/cpp
                 PUBLIC ${IMGUI_ROOT_FOLDER}/backends
                 PUBLIC ${SFML_ROOT_FOLDER}/include
-                # PUBLIC "C:\\glfw-3.3.8.bin.WIN32\\include"  # path to GLFW headers
+                # PUBLIC "C:\\glfw-3.3.8.bin.WIN32\\include"  # path to GLFW headers on Windows system
                 PUBLIC ${GLFW_ROOT_FOLDER}/include
+                # PUBLIC ${GLEW_ROOT_FOLDER}/include
                 PRIVATE ${CMAKE_SOURCE_DIR}/include
                 )
 
-# target_link_directories(${EXE} PUBLIC "C:\\glfw-3.3.8.bin.WIN64\\lib-vc2022") # path to GLFW libs in Windows
+# target_link_directories(${EXE} PUBLIC "C:\\glfw-3.3.8.bin.WIN64\\lib-vc2022") # path to GLFW libs on Windows system
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
     target_link_directories(${EXE} PUBLIC ${GLFW_ROOT_FOLDER}/build/src/Debug)
 else()
     target_link_directories(${EXE} PUBLIC ${GLFW_ROOT_FOLDER}/build/src/Release)
 endif()
 
+# target_link_directories(${EXE} PUBLIC ${GLEW_ROOT_FOLDER}/lib/Release/x64)
 target_link_libraries(${EXE} PUBLIC glfw3)
 
 else()
@@ -58,13 +61,15 @@ target_include_directories(${EXE}
                 PUBLIC ${IMGUI_ROOT_FOLDER}
                 PUBLIC ${IMGUI_ROOT_FOLDER}/misc/cpp
                 PUBLIC ${IMGUI_ROOT_FOLDER}/backends
+                # PUBLIC ${GLEW_ROOT_FOLDER}/include
                 PRIVATE ${CMAKE_SOURCE_DIR}/include
                 )
 
-target_link_libraries(${EXE}
-                    PUBLIC glfw
-                    PUBLIC GL
-                    )
+find_package(X11 REQUIRED)
+
+# target_link_directories(${EXE} PUBLIC ${GLEW_ROOT_FOLDER}/lib/Release/x64)
+target_link_libraries(${EXE} PUBLIC glfw GL ${X11_LIBRARIES} pthread ${X11_Xrandr_LIB} dl)
+
 endif()
 
 # Working with OpenGL on both platforms
