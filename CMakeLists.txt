@@ -4,6 +4,7 @@ project(flipper VERSION 0.1.0 LANGUAGES C CXX)
 set(EXE flipper)
 
 set(IMGUI_ROOT_FOLDER ${CMAKE_SOURCE_DIR}/dependencies/imgui)
+set(GLFW_ROOT_FOLDER ${CMAKE_SOURCE_DIR}/dependencies/glfw)
 
 include(CTest)
 enable_testing()
@@ -19,17 +20,26 @@ add_executable(${EXE}
             ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_glfw.cpp
             ${IMGUI_SRC_FILE}
             ${IMGUI_ROOT_FOLDER}/misc/cpp/imgui_stdlib.cpp
+            src/glad.c
             )
 
-include_directories(${EXE}
-                ${IMGUI_ROOT_FOLDER}
-                ${IMGUI_ROOT_FOLDER}/misc/cpp
-                ${IMGUI_ROOT_FOLDER}/backends
-                ${SFML_ROOT_FOLDER}/include
-                "C:\\glfw-3.3.8.bin.WIN32\\include"  # path to GLFW headers
+target_include_directories(${EXE}
+                PUBLIC ${IMGUI_ROOT_FOLDER}
+                PUBLIC ${IMGUI_ROOT_FOLDER}/misc/cpp
+                PUBLIC ${IMGUI_ROOT_FOLDER}/backends
+                PUBLIC ${SFML_ROOT_FOLDER}/include
+                # PUBLIC "C:\\glfw-3.3.8.bin.WIN32\\include"  # path to GLFW headers
+                PUBLIC ${GLFW_ROOT_FOLDER}/include
+                PRIVATE ${CMAKE_SOURCE_DIR}/include
                 )
 
-target_link_directories(${EXE} PUBLIC "C:\\glfw-3.3.8.bin.WIN64\\lib-vc2022") # path to GLFW libs
+# target_link_directories(${EXE} PUBLIC "C:\\glfw-3.3.8.bin.WIN64\\lib-vc2022") # path to GLFW libs in Windows
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    target_link_directories(${EXE} PUBLIC ${GLFW_ROOT_FOLDER}/build/src/Debug)
+else()
+    target_link_directories(${EXE} PUBLIC ${GLFW_ROOT_FOLDER}/build/src/Release)
+endif()
+
 target_link_libraries(${EXE} PUBLIC glfw3)
 
 else()
@@ -41,19 +51,20 @@ add_executable(${EXE}
             ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_glfw.cpp
             ${IMGUI_SRC_FILE}
             ${IMGUI_ROOT_FOLDER}/misc/cpp/imgui_stdlib.cpp
+            src/glad.c
             )
 
-include_directories(${EXE}
-                ${IMGUI_ROOT_FOLDER}
-                ${IMGUI_ROOT_FOLDER}/misc/cpp
-                ${IMGUI_ROOT_FOLDER}/backends
+target_include_directories(${EXE}
+                PUBLIC ${IMGUI_ROOT_FOLDER}
+                PUBLIC ${IMGUI_ROOT_FOLDER}/misc/cpp
+                PUBLIC ${IMGUI_ROOT_FOLDER}/backends
+                PRIVATE ${CMAKE_SOURCE_DIR}/include
                 )
 
 target_link_libraries(${EXE}
                     PUBLIC glfw
                     PUBLIC GL
                     )
-
 endif()
 
 # Working with OpenGL on both platforms
