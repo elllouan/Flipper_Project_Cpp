@@ -1,0 +1,34 @@
+A shader is a program that runs on the GPU. It is used to render shapes
+out on the screen. There exist multiple shaders but here are the most common
+ones:
+- vertex shader: determines the position of each position vertex on the screen.
+- geometry shader: 
+- fragment shader: determines the color of each pixel on the shapes that was displayed.
+
+The fragment shader is much more expensive operation because it gets called as many times
+as the number of pixels there are within the shape defined by the vertex shader.
+
+The graphics pipeline is:
+GPU -> vertex shader -> fragment shader -> screen
+
+
+Some definitions:
+- A fragment 
+	is all the data required for OpenGL to render a single pixel.
+- VBO for Vertex Buffer Object 
+	is an OpenGL object that aims to store raw data such as position, color, textture, brightness ...
+- VAO for Vertex Array Object 
+	is an OpenGL object that aims to tell how to access the data of a bounded VBO.
+https://www.youtube.com/watch?v=Ktp1P4J04Gw
+
+
+// 0. copy our vertices array in a buffer for OpenGL to use
+glBindBuffer(GL_ARRAY_BUFFER, VBO);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+// 1. then set the vertex attributes pointers
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+glEnableVertexAttribArray(0);  
+// 2. use our shader program when we want to render an object
+glUseProgram(shaderProgram);
+// 3. now draw the object 
+someOpenGLFunctionThatDrawsOurTriangle(); 

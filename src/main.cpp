@@ -1,17 +1,92 @@
 #include <iostream>
+#include <string>
+
+#if IMGUI
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#endif
 
 // Either GLAD or GLEW
-// #include <GL/glew.h>
+#if WINDOW_MSVC
 #include <glad/glad.h>
+#else
+#include <GL/glew.h>
+#endif
 
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
+/*
+ * @brief Compile the given shader
+ * @param shaderType any type of shader (preferably use macros)
+ * @param source source code of the shader
+ * @return The shader's ID (unsigned int) 
+*/
+static unsigned int CompileShader(unsigned int shaderType,
+    const std::string& source)
+{
+    unsigned int shaderId = glCreateShader(shaderType);
+    const char* shaderSrc = source.c_str();
+    glShaderSource(shaderId, 1, &shaderSrc, nullptr);
+    glCompileShader(shaderId);
+
+    // Shader Compilation Error Handling
+    int result;
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE)
+    {
+        int length;
+        glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
+        // Allocate data dynamically on the stack with alloca
+        char* message = (char *)alloca(length * sizeof(char));
+        glGetShaderInfoLog(shaderId, length, &length, message);
+        std::cout << message << std::endl;
+    }
+    return shaderId;
+}
+
+/*
+ * @brief Create (Compile/Attach/Link) the given shaders sources and a program
+ * @param shaderType any type of shader (preferably use macros)
+ * @param source source code of the shader
+ * @return The shader's ID (unsigned int) 
+*/
+static unsigned int CreateShader(const std::string& vertexShader,
+    const std::string& fragmentShader)
+{
+    unsigned int shaderProgram = glCreateProgram();
+    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+    glAttachShader(shaderProgram, vs);
+    glAttachShader(shaderProgram, fs);
+    glLinkProgram(shaderProgram);
+
+    // Shader Compilation Error Handling
+    int success;
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if(!success) {
+        int length;
+        char* message = (char *)alloca(length * sizeof(char));
+        glGetProgramInfoLog(shaderProgram, 512, NULL, message);
+        std::cout << message << std::endl;
+    }
+
+    glValidateProgram(shaderProgram);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return shaderProgram;
+}
+
 int main()
 {
     glfwInit();
+    const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -26,57 +101,160 @@ int main()
     }
     glfwMakeContextCurrent(window);
 
-    // if (glewInit() != GLEW_OK)
-    // {
-    //     std::cout << "Failed to initialize GLEW" << std::endl;
-    //     return -1;
-    // }
-
+#if WINDOW_MSVC
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
+#else
+    if (glewInit() != GLEW_OK)
+    {
+        std::cout << "Failed to initialize GLEW" << std::endl;
+        return -1;
+    }
+#endif
     // Print out the current version
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     glViewport(0,0,1000,500);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    float vertices[6] = 
+#if IMGUI
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+#endif
+
+    /* OpenGL uses buffers to render shapes out. Below is an example of a triangle. However, none of these functions:
+     * glGenBuffers(), glBindBuffers(), glBufferData() specify what we aim to render and how we are going to do it.
+     * Right now, those are just here to load data inside a buffer that we can use to render a triangle.
+     * The data here is directly loaded on the GPU that waits our instruction (shader) before using this data.
+     * A shader reads the data stored on the GPU and display it on the screen.
+    */
+    float positions1[6] = 
     {
         -0.5f,-0.5f,
          0.0f, 0.5f,
          0.5f,-0.5f
     };
 
-    unsigned int triangleBuffer;
-    glGenBuffers(1, &triangleBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, triangleBuffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), vertices, GL_STATIC_DRAW);
+    float positions2[6] = 
+    {
+        -0.1f,-0.1f,
+        -0.9f, 0.2f,
+         0.8f,-0.3f
+    };
+
+    // VBO stands for Vertex Buffer Object
+    // VBA stands for Vertex Array Object
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    // Creates a VBO
+    glGenBuffers(1, &VBO);
+    // glGenBuffers(1, &VBO2);
+
+    // Binds the VAO before binding and setting VBOs
+    glBindVertexArray(VAO);
+    // glBindVertexArray(VAO2);
+
+    // Binds the created VBO to the current context
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    // Populates this VBO with data
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions1, GL_STATIC_DRAW);
+
+    // This functino should be called for each attribute of the vertex
+    // In this case, we only provide position vertices so we call it only once
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), 0);
+    glEnableVertexAttribArray(0);
+
+    // Breaks the existing VAO binding
+    glBindVertexArray(0);
+
+    std::string vertexShader =
+        "#version 330 core\n"
+        "\n"
+        "layout(location = 0) in vec4 position;\n" // Added semicolon here
+        "\n"
+        "void main()\n"
+        "{\n" // Added curly brace here
+        "   gl_Position = position;\n"
+        "}\n"; // Added closing curly brace and semicolon here
+
+    std::string fragmentShader =
+        "#version 330 core\n"
+        "\n"
+        "out vec4 color;\n" // Added semicolon here
+        "\n"
+        "void main()\n"
+        "{\n" // Added curly brace here
+        "   color = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
+        "}\n"; // Added closing curly brace and semicolon here
+
+
+    unsigned int shader = CreateShader(vertexShader, fragmentShader);
 
     // Render loop
     while(!glfwWindowShouldClose(window))
     {
+#if IMGUI
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("ImGui window");
+        ImGui::Text("Hello World");
+        ImGui::End();
+#endif
         processInput(window);
 
-        // Rendering commands
-        glClear(GL_COLOR_BUFFER_BIT |   // This buffer contains the color info of each pixel within the frame
-                GL_DEPTH_BUFFER_BIT );  // This buffer contains the depth info of each pixel within the frame
+        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        // Does not work ...
-        // glBegin(GL_TRIANGLES);
-        // glVertex2f(-0.5f,-0.5f);
-        // glVertex2f(0.0f,0.5f);
-        // glVertex2f(0.5f,-0.5f);
-        // glEnd();
+        glUseProgram(shader);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // Callback functions will be called if an event is detected
+#if IMGUI
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
         glfwSwapBuffers(window);
-        glfwPollEvents();    
+        glfwPollEvents();
     }
 
+#if IMGUI
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+#endif
+
+    
+    // glDeleteVertexArrays(1, &VAO);
+    // glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shader);
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
