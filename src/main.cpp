@@ -81,6 +81,34 @@ static unsigned int CreateShader(const std::string& vertexShader,
     return shaderProgram;
 }
 
+/*
+ * @brief Create a complete VBO and VAO, ready to be rendered out.
+ * This will call all necessary functions to generate, bind, attribute and populate both VBO and VAO.
+ * (Could be better if pass structs as arguments)
+ * @return Void
+*/
+static void CreateVertexAttribObject(
+    unsigned int &VBO,
+    unsigned int &VAO,
+    GLenum target,
+    const void *dataArray, 
+    int nbData,
+    GLenum usage,
+    unsigned int index,
+    int nbAttributes,
+    GLenum type,
+    const void *startPointer
+    )
+{
+    glBindVertexArray(VAO);
+    
+    glBindBuffer(target, VBO);
+    glBufferData(target, nbData*sizeof(type), dataArray, usage);
+
+    glVertexAttribPointer(index, nbAttributes, type, GL_FALSE, nbAttributes*sizeof(type), startPointer);
+    glEnableVertexAttribArray(index);
+}
+
 int main()
 {
     glfwInit();
@@ -158,32 +186,21 @@ int main()
 
     // VBO stands for Vertex Buffer Object
     // VAO stands for Vertex Array Object
+
+    /*
+     * To render out several shapes such as 2 triangles, we have to consider that OpenGL works as a state machine.
+     * It means that every vertex attribute specification made for a entity must be done before binding a new buffer.
+     * Therefore, before binding to VAO2 and VBO2, I first need to specify everything for VBO1 and VBO2.
+    */
+
     unsigned int VBO1, VBO2, VAO1, VAO2;
     glGenVertexArrays(1, &VAO1);
-    glGenVertexArrays(1, &VAO2);
-    // Creates a VBO
     glGenBuffers(1, &VBO1);
+    CreateVO(VBO1, VAO1, GL_ARRAY_BUFFER, positions1, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
+    
+    glGenVertexArrays(1, &VAO2);
     glGenBuffers(1, &VBO2);
-
-    // Binds the VAO before binding and setting VBOs
-    glBindVertexArray(VAO1);
-    // Binds the created VBO to the current context
-    glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-    // Populates this VBO with data
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions1, GL_STATIC_DRAW);
-
-    // This function should be called for each attribute of the vertex
-    // In this case, we only provide position vertices so we call it only once
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), 0);
-    glEnableVertexAttribArray(0);
-
-    // Replaces the existing VAO1 binding
-    glBindVertexArray(VAO2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions2, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2* sizeof(float), 0);
-    glEnableVertexAttribArray(0);
+    CreateVO(VBO2, VAO2, GL_ARRAY_BUFFER, positions2, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
 
     std::string vertexShader =
         "#version 330 core\n"
@@ -227,6 +244,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader);
+
         glBindVertexArray(VAO1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
