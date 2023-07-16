@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 
 #if IMGUI
@@ -18,6 +19,27 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+
+static std::string parseShaderFile(const std::string& fileName)
+{
+    std::string path = "C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\shaders\\";
+    std::ifstream file(path+fileName);
+    std::string fileContent;
+
+    if (file)
+    {
+        std::string line;
+        while (std::getline(file, line))
+        {
+            fileContent += line + "\n";
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to open file: " << fileName << std::endl;
+    }
+    return fileContent;
+}
 
 /*
  * @brief Compile the given shader.
@@ -68,6 +90,7 @@ static unsigned int CreateShader(const std::string& vertexShader,
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if(!success) {
         int length;
+        glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &length);
         char* message = (char *)alloca(length * sizeof(char));
         glGetProgramInfoLog(shaderProgram, 512, NULL, message);
         std::cout << message << std::endl;
@@ -209,10 +232,10 @@ int main()
 
     // Draw a rectangle with 2 triangles using Element Buffer Object
     float rectangle[] = {
-         0.5f,  0.5f,  // top right
-         0.5f, -0.5f,  // bottom right
-        -0.5f, -0.5f,  // bottom left
-        -0.5f,  0.5f   // top left 
+         0.3f,  0.3f,  // top right
+         0.3f, -0.3f,  // bottom right
+        -0.3f, -0.3f,  // bottom left
+        -0.3f,  0.3f   // top left 
     };
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,   // first triangle
@@ -235,31 +258,14 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6, indices, GL_STATIC_DRAW);
+    // shader for printing triangles
+    std::string vertexShader = parseShaderFile("vertexShaderTri.txt");
+    std::string fragmentShader = parseShaderFile("fragmentShaderTri.txt");
+    unsigned int shaderTri = CreateShader(vertexShader, fragmentShader);
 
-    std::string vertexShader =
-        "#version 330 core\n"
-        "\n"
-        "layout(location = 0) in vec4 position;\n" // Added semicolon here
-        "\n"
-        "void main()\n"
-        "{\n" // Added curly brace here
-        "   gl_Position = position;\n"
-        "}\n"; // Added closing curly brace and semicolon here
-
-    std::string fragmentShader =
-        "#version 330 core\n"
-        "\n"
-        "out vec4 color;\n" // Added semicolon here
-        "\n"
-        "void main()\n"
-        "{\n" // Added curly brace here
-        "   color = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
-        "}\n"; // Added closing curly brace and semicolon here
-
-
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+    // shader for printing a rectangle
+    fragmentShader = parseShaderFile("fragmentShaderRec.txt");
+    unsigned int shaderRec = CreateShader(vertexShader, fragmentShader);
 
     // Render loop
     while(!glfwWindowShouldClose(window))
@@ -279,17 +285,20 @@ int main()
         glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shader);
+        // Draw a red triangle
+        glUseProgram(shaderTri);
+        glBindVertexArray(VAO1);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // glBindVertexArray(VAO1);
-        // glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        // glBindVertexArray(VAO2);
-        // glDrawArrays(GL_TRIANGLES, 0, 3);
-
+        // Draw a yellow rectangle
+        glUseProgram(shaderRec);
         glBindVertexArray(VAO3);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+
+        // Draw another red triangle
+        glUseProgram(shaderTri);
+        glBindVertexArray(VAO2);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
 #if IMGUI
         // Rendering
@@ -315,7 +324,8 @@ int main()
     
     // glDeleteVertexArrays(1, &VAO);
     // glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shader);
+    glDeleteProgram(shaderTri);
+    glDeleteProgram(shaderRec);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
