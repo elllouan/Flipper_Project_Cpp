@@ -11,7 +11,6 @@ as the number of pixels there are within the shape defined by the vertex shader.
 The graphics pipeline is:
 GPU -> vertex shader -> fragment shader -> screen
 
-
 Some definitions:
 - A fragment 
 	is all the data required for OpenGL to render a single pixel.
@@ -23,14 +22,18 @@ https://www.youtube.com/watch?v=Ktp1P4J04Gw
 - EBO for Element Buffer Object
 	is a buffer, just like a VBO, that stores indices that OpenGL uses to decide what vertices to draw. It helps avoiding overlapping.
 
+Steps to follow to render sth out:
+Manage OpenGL objects:
+	1. glGenBuffer or glGenVertexArrays: generate VBO, EBO or VAO.
+	2. glBindBuffer or glBindVertexArray: bind VBO, EBO or VAOto the current context.
+	3. glBufferData (for VBO and EBO): specify details about data for each buffer.
+	4. glVertexAttribPointer: specify how to access attributes of the bounded VBO.
+	5. glEnableVertexArray
 
-// 0. copy our vertices array in a buffer for OpenGL to use
-glBindBuffer(GL_ARRAY_BUFFER, VBO);
-glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-// 1. then set the vertex attributes pointers
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-glEnableVertexAttribArray(0);  
-// 2. use our shader program when we want to render an object
-glUseProgram(shaderProgram);
-// 3. now draw the object 
-someOpenGLFunctionThatDrawsOurTriangle(); 
+Manage shaders:
+	1. 
+	2.
+	3.
+	4.
+	5.
+	6.
