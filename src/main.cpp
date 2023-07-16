@@ -20,10 +20,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 /*
- * @brief Compile the given shader
- * @param shaderType any type of shader (preferably use macros)
- * @param source source code of the shader
- * @return The shader's ID (unsigned int) 
+ * @brief Compile the given shader.
+ * @param shaderType Any type of shader (preferably use macros).
+ * @param source Source code of the shader.
+ * @return The shader's ID (unsigned int).
 */
 static unsigned int CompileShader(unsigned int shaderType,
     const std::string& source)
@@ -49,10 +49,8 @@ static unsigned int CompileShader(unsigned int shaderType,
 }
 
 /*
- * @brief Create (Compile/Attach/Link) the given shaders sources and a program
- * @param shaderType any type of shader (preferably use macros)
- * @param source source code of the shader
- * @return The shader's ID (unsigned int) 
+ * @brief Create (Compile/Attach/Link) the given shaders sources and a program.
+ * @return A shader program (unsigned int).
 */
 static unsigned int CreateShader(const std::string& vertexShader,
     const std::string& fragmentShader)
