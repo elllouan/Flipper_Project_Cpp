@@ -189,10 +189,11 @@ int main()
 
     // Draw a rectangle with 2 triangles using Element Buffer Object
     float rectangle[] = {
-         0.3f,  0.3f,  // top right
-         0.3f, -0.3f,  // bottom right
-        -0.3f, -0.3f,  // bottom left
-        -0.3f,  0.3f   // top left 
+        /*-- position --*/  /*--- color ---*/
+         0.3f,  0.3f, 0.0f, 1.0f,  0.0f, 0.0f,  // top right
+         0.3f, -0.3f, 0.0f, 1.0f,  0.0f, 0.0f,  // bottom right
+        -0.3f, -0.3f, 0.0f, 0.0f,  1.0f, 0.0f,  // bottom left
+        -0.3f,  0.3f, 0.0f, 0.0f,  0.0f, 1.0f   // top left 
     };
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,   // first triangle
@@ -212,8 +213,12 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     // 4. then set the vertex attributes pointers
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    // first set the position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    // second set the color
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // Shaders for printing a rectangle
     std::string fragmentShader = parseShaderFile("fragmentShaderRec.txt");
@@ -239,18 +244,24 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Draw a yellow rectangle
-        // glBindVertexArray(VAO);
+        // glBindVertexArray(VAO); No need to call it here since there is only one VAO and we never unbind it
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
         // Changes the color gradually
         float timeValue = glfwGetTime();
         float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-        // Locates the uniform variable color in shaders (could be in any shader)
+
+        // Finding the uniform location does not require you to use the shader program first,
+		// but updating a uniform does require you to first use the program (by calling glUseProgram),
+		// because it sets the uniform on the currently active shader program.
+        
+        // Locates the uniform variable color in shaders (could be in any shader of the shaderRec program)
         int vertexColorLocation = glGetUniformLocation(shaderRec, "color");
         glUseProgram(shaderRec);
         // Define the color
         glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 #if IMGUI
         // Rendering
