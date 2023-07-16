@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 
+#include "shader.hpp"
+
 #if IMGUI
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -85,7 +87,7 @@ static unsigned int CreateShader(const std::string& vertexShader,
     glAttachShader(shaderProgram, fs);
     glLinkProgram(shaderProgram);
 
-    // Shader Compilation Error Handling
+    // Shader Link Error Handling
     int success;
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if(!success) {
@@ -221,9 +223,12 @@ int main()
     glEnableVertexAttribArray(1);
 
     // Shaders for printing a rectangle
-    std::string fragmentShader = parseShaderFile("fragmentShaderRec.txt");
-    std::string vertexShader = parseShaderFile("vertexShaderRec.txt");
-    unsigned int shaderRec = CreateShader(vertexShader, fragmentShader);
+    Shader myShader = Shader();
+    unsigned int shaderRecProg = myShader.createShaderProgram("vertexShaderRec.txt", "fragmentShaderRec.txt");
+
+    // std::string fragmentShader = parseShaderFile("fragmentShaderRec.txt");
+    // std::string vertexShader = parseShaderFile("vertexShaderRec.txt");
+    // unsigned int shaderRecProg = CreateShader(vertexShader, fragmentShader);
 
     // Render loop
     while(!glfwWindowShouldClose(window))
@@ -243,25 +248,28 @@ int main()
         glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        myShader.useProgram();
+
         // Draw a yellow rectangle
-        // glBindVertexArray(VAO); No need to call it here since there is only one VAO and we never unbind it
+        glBindVertexArray(VAO); // No need to call it here since there is only one VAO and we never unbind it
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
+
+        /* CODE EXAMPLE FOR UNIFORMS */
+
         // Changes the color gradually
-        float timeValue = glfwGetTime();
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+        // float timeValue = glfwGetTime();
+        // float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 
         // Finding the uniform location does not require you to use the shader program first,
 		// but updating a uniform does require you to first use the program (by calling glUseProgram),
 		// because it sets the uniform on the currently active shader program.
         
-        // Locates the uniform variable color in shaders (could be in any shader of the shaderRec program)
-        int vertexColorLocation = glGetUniformLocation(shaderRec, "color");
-        glUseProgram(shaderRec);
-        // Define the color
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // Locates the uniform variable color in shaders (could be in any shader of the shaderRecProg program)
+        // int vertexColorLocation = glGetUniformLocation(shaderRecProg, "color");
+        // glUseProgram(shaderRecProg);
+        // // Define the color
+        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
 #if IMGUI
         // Rendering
@@ -287,7 +295,7 @@ int main()
     
     // glDeleteVertexArrays(1, &VAO);
     // glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderRec);
+    myShader.deleteProgram();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

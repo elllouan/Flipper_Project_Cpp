@@ -20,6 +20,7 @@ add_executable(${EXE}
             src/main.cpp
             # src/main_test.cpp
             src/glad.c
+            src/shader.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_opengl3.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_glfw.cpp
             # ${IMGUI_SRC_FILE}
