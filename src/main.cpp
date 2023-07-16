@@ -151,36 +151,39 @@ int main()
 
     float positions2[6] = 
     {
-        -0.1f,-0.1f,
-        -0.9f, 0.2f,
-         0.8f,-0.3f
+        -0.8f,-0.8f,
+         0.0f, 0.5f,
+        -0.7f, 0.3f
     };
 
     // VBO stands for Vertex Buffer Object
-    // VBA stands for Vertex Array Object
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
+    // VAO stands for Vertex Array Object
+    unsigned int VBO1, VBO2, VAO1, VAO2;
+    glGenVertexArrays(1, &VAO1);
+    glGenVertexArrays(1, &VAO2);
     // Creates a VBO
-    glGenBuffers(1, &VBO);
-    // glGenBuffers(1, &VBO2);
+    glGenBuffers(1, &VBO1);
+    glGenBuffers(1, &VBO2);
 
     // Binds the VAO before binding and setting VBOs
-    glBindVertexArray(VAO);
-    // glBindVertexArray(VAO2);
-
+    glBindVertexArray(VAO1);
     // Binds the created VBO to the current context
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO1);
     // Populates this VBO with data
     glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions1, GL_STATIC_DRAW);
 
-    // This functino should be called for each attribute of the vertex
+    // This function should be called for each attribute of the vertex
     // In this case, we only provide position vertices so we call it only once
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), 0);
     glEnableVertexAttribArray(0);
 
-    // Breaks the existing VAO binding
-    glBindVertexArray(0);
+    // Replaces the existing VAO1 binding
+    glBindVertexArray(VAO2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions2, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2* sizeof(float), 0);
+    glEnableVertexAttribArray(0);
 
     std::string vertexShader =
         "#version 330 core\n"
@@ -224,7 +227,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader);
-        glBindVertexArray(VAO);
+        glBindVertexArray(VAO1);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glBindVertexArray(VAO2);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
 #if IMGUI
