@@ -194,8 +194,8 @@ int main()
         /*-- position --*/  /*--- color ---*/
          0.3f,  0.3f, 0.0f, 1.0f,  0.0f, 0.0f,  // top right
          0.3f, -0.3f, 0.0f, 1.0f,  0.0f, 0.0f,  // bottom right
-        -0.3f, -0.3f, 0.0f, 0.0f,  1.0f, 0.0f,  // bottom left
-        -0.3f,  0.3f, 0.0f, 0.0f,  0.0f, 1.0f   // top left 
+        -0.3f, -0.3f, 0.0f, 1.0f,  0.0f, 0.0f,  // bottom left
+        -0.3f,  0.3f, 0.0f, 1.0f,  0.0f, 0.0f   // top left 
     };
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,   // first triangle
@@ -224,11 +224,9 @@ int main()
 
     // Shaders for printing a rectangle
     Shader myShader = Shader();
-    unsigned int shaderRecProg = myShader.createShaderProgram("vertexShaderRec.txt", "fragmentShaderRec.txt");
+    unsigned int shaderRecProg = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
 
-    // std::string fragmentShader = parseShaderFile("fragmentShaderRec.txt");
-    // std::string vertexShader = parseShaderFile("vertexShaderRec.txt");
-    // unsigned int shaderRecProg = CreateShader(vertexShader, fragmentShader);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Render loop
     while(!glfwWindowShouldClose(window))
@@ -245,7 +243,7 @@ int main()
 #endif
         processInput(window);
 
-        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+        // glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         myShader.useProgram();
@@ -258,18 +256,21 @@ int main()
         /* CODE EXAMPLE FOR UNIFORMS */
 
         // Changes the color gradually
-        // float timeValue = glfwGetTime();
-        // float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+        float timeValue = glfwGetTime();
+        // Rotate at 180° per second
+        float rotateX = cos(timeValue*3.14/50);
+        float rotateY = sin(timeValue*3.14/50);
+        float blueValue = (sin(timeValue) / 2.0f) + 0.5f;
 
         // Finding the uniform location does not require you to use the shader program first,
 		// but updating a uniform does require you to first use the program (by calling glUseProgram),
 		// because it sets the uniform on the currently active shader program.
         
-        // Locates the uniform variable color in shaders (could be in any shader of the shaderRecProg program)
-        // int vertexColorLocation = glGetUniformLocation(shaderRecProg, "color");
-        // glUseProgram(shaderRecProg);
-        // // Define the color
-        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        // Rotate
+        float values[2] = {rotateX, rotateY};
+        myShader.setFloat("rotate2D", values, 2);
+        myShader.setFloat("myBlue", &blueValue);
+
 
 #if IMGUI
         // Rendering

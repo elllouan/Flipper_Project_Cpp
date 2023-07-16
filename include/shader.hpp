@@ -26,9 +26,13 @@ public:
 
     // TODO: Error handling
     unsigned int createShaderProgram(const std::string &vertexShaderFileName, const std::string &fragmentShaderFileName);
+    unsigned int compile(const std::string &fileName, GLenum shaderType);
     void useProgram();
     void deleteProgram();
-    unsigned int compile(const std::string &fileName, GLenum shaderType);
+    void setBool(const std::string &name, bool value, int size) const;
+    void setInt(const std::string &name, int value, int size) const;
+    void setFloat(const std::string &name, float *values, int size = 1) const;
+
     unsigned int getShaderProgram();
 };
 

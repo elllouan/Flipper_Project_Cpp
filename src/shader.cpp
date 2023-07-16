@@ -21,6 +21,7 @@ Shader::parse(const std::string &fileName)
         {
             fileContent += line + "\n";
         }
+        file.close();
     }
     else
     {
@@ -110,6 +111,38 @@ Shader::deleteProgram()
 {
     glDeleteProgram(m_program);
 }
+
+void
+Shader::setBool(const std::string &name, bool value, int size) const
+{         
+    glUniform1i(glGetUniformLocation(m_program, name.c_str()), (int)value); 
+}
+void
+Shader::setInt(const std::string &name, int value, int size) const
+{ 
+    glUniform1i(glGetUniformLocation(m_program, name.c_str()), value); 
+}
+void
+Shader::setFloat(const std::string &name, float *values, int size) const
+{ 
+    switch (size)
+    {
+    case 1:
+        glUniform1f(glGetUniformLocation(m_program, name.c_str()), *values);
+        break;
+    case 2:
+        glUniform2f(glGetUniformLocation(m_program, name.c_str()), values[0], values[1]);
+        break;
+    case 3:
+        glUniform3f(glGetUniformLocation(m_program, name.c_str()), values[1], values[2], values[3]);
+        break;
+    case 4:
+        glUniform4f(glGetUniformLocation(m_program, name.c_str()), values[1], values[2], values[3], values[4]);
+        break;
+    default:
+        break;
+    } 
+} 
 
 /* --------------- Getter & Setter Functions --------------- */
 
