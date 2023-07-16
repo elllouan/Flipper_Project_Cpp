@@ -8,6 +8,8 @@ ones:
 The fragment shader is much more expensive operation because it gets called as many times
 as the number of pixels there are within the shape defined by the vertex shader.
 
+CHAP 1: OpenGL objects and graphics pipeline
+
 The graphics pipeline is:
 GPU -> vertex shader -> fragment shader -> screen
 
@@ -22,6 +24,7 @@ https://www.youtube.com/watch?v=Ktp1P4J04Gw
 - EBO for Element Buffer Object
 	is a buffer, just like a VBO, that stores indices that OpenGL uses to decide what vertices to draw. It helps avoiding overlapping.
 
+
 Steps to follow to render sth out:
 Manage OpenGL objects:
 	1. glGenBuffer or glGenVertexArrays: generate VBO, EBO or VAO.
@@ -30,10 +33,17 @@ Manage OpenGL objects:
 	4. glVertexAttribPointer: specify how to access attributes of the bounded VBO.
 	5. glEnableVertexArray
 
-Manage shaders:
+Create simple shaders:
 	1. 
 	2.
 	3.
 	4.
 	5.
 	6.
+
+
+CHAP 2: Shaders with GLSL
+
+	1. Transfer data from one shader to another one by using 'in' and 'out' keywords.
+	2. Uniforms are another way to pass data from our application on the CPU to the shaders on the GPU.
+		They are global variables that can be accesed from whichever shader and also from the code.

@@ -187,49 +187,6 @@ int main()
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 #endif
 
-    /* OpenGL uses buffers to render shapes out. Below is an example of a triangle. However, none of these functions:
-     * glGenBuffers(), glBindBuffers(), glBufferData() specify what we aim to render and how we are going to do it.
-     * Right now, those are just here to load data inside a buffer that we can use to render a triangle.
-     * The data here is directly loaded on the GPU that waits our instruction (shader) before using this data.
-     * A shader reads the data stored on the GPU and display it on the screen.
-    */
-    float positions1[6] = 
-    {
-        -0.5f,-0.5f,
-         0.0f, 0.5f,
-         0.5f,-0.5f
-    };
-
-    float positions2[6] = 
-    {
-        -0.8f,-0.8f,
-         0.0f, 0.5f,
-        -0.7f, 0.3f
-    };
-
-    // VBO stands for Vertex Buffer Object
-    // VAO stands for Vertex Array Object
-
-    /*
-     * To render out several shapes such as 2 triangles, we have to consider that OpenGL works as a state machine.
-     * It means that every vertex attribute specification made for a entity must be done before binding a new buffer.
-     * Therefore, before binding to VAO2 and VBO2, I first need to specify everything for VBO1 and VBO2.
-    */
-
-    unsigned int VBO1, VBO2, VAO1, VAO2;
-    glGenVertexArrays(1, &VAO1);
-    glGenBuffers(1, &VBO1);
-    CreateVertexAttribObject(VBO1, VAO1, GL_ARRAY_BUFFER, positions1, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
-    
-    glGenVertexArrays(1, &VAO2);
-    glGenBuffers(1, &VBO2);
-    CreateVertexAttribObject(VBO2, VAO2, GL_ARRAY_BUFFER, positions2, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
-
-    // Generates an empty triangle, modifies the type of rasterization
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // Modifies the size of points, works only if GL_POINT is chosen
-    // glPointSize(10.0f);
-
     // Draw a rectangle with 2 triangles using Element Buffer Object
     float rectangle[] = {
          0.3f,  0.3f,  // top right
@@ -242,14 +199,14 @@ int main()
         1, 2, 3    // second triangle
     };
 
-    unsigned int VBO3, VAO3, EBO;
-    glGenVertexArrays(1, &VAO3);
-    glGenBuffers(1, &VBO3);
+    unsigned int VBO, VAO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
 
-    glBindVertexArray(VAO3);
+    glBindVertexArray(VAO);
     // 2. copy our vertices array in a vertex buffer for OpenGL to use
-    glBindBuffer(GL_ARRAY_BUFFER, VBO3);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(rectangle), rectangle, GL_STATIC_DRAW);
     // 3. copy our index array in a element buffer for OpenGL to use
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -258,13 +215,9 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // shader for printing triangles
-    std::string vertexShader = parseShaderFile("vertexShaderTri.txt");
-    std::string fragmentShader = parseShaderFile("fragmentShaderTri.txt");
-    unsigned int shaderTri = CreateShader(vertexShader, fragmentShader);
-
-    // shader for printing a rectangle
-    fragmentShader = parseShaderFile("fragmentShaderRec.txt");
+    // Shaders for printing a rectangle
+    std::string fragmentShader = parseShaderFile("fragmentShaderRec.txt");
+    std::string vertexShader = parseShaderFile("vertexShaderRec.txt");
     unsigned int shaderRec = CreateShader(vertexShader, fragmentShader);
 
     // Render loop
@@ -285,20 +238,19 @@ int main()
         glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Draw a red triangle
-        glUseProgram(shaderTri);
-        glBindVertexArray(VAO1);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
         // Draw a yellow rectangle
+        // glBindVertexArray(VAO);
+        
+        // Changes the color gradually
+        float timeValue = glfwGetTime();
+        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+        // Locates the uniform variable color in shaders (could be in any shader)
+        int vertexColorLocation = glGetUniformLocation(shaderRec, "color");
         glUseProgram(shaderRec);
-        glBindVertexArray(VAO3);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // Define the color
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
-        // Draw another red triangle
-        glUseProgram(shaderTri);
-        glBindVertexArray(VAO2);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 #if IMGUI
         // Rendering
@@ -324,7 +276,6 @@ int main()
     
     // glDeleteVertexArrays(1, &VAO);
     // glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderTri);
     glDeleteProgram(shaderRec);
     glfwDestroyWindow(window);
     glfwTerminate();
