@@ -196,11 +196,47 @@ int main()
     unsigned int VBO1, VBO2, VAO1, VAO2;
     glGenVertexArrays(1, &VAO1);
     glGenBuffers(1, &VBO1);
-    CreateVO(VBO1, VAO1, GL_ARRAY_BUFFER, positions1, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
+    CreateVertexAttribObject(VBO1, VAO1, GL_ARRAY_BUFFER, positions1, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
     
     glGenVertexArrays(1, &VAO2);
     glGenBuffers(1, &VBO2);
-    CreateVO(VBO2, VAO2, GL_ARRAY_BUFFER, positions2, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
+    CreateVertexAttribObject(VBO2, VAO2, GL_ARRAY_BUFFER, positions2, 6, GL_STATIC_DRAW, 0, 2, GL_FLOAT, 0);
+
+    // Generates an empty triangle, modifies the type of rasterization
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Modifies the size of points, works only if GL_POINT is chosen
+    // glPointSize(10.0f);
+
+    // Draw a rectangle with 2 triangles using Element Buffer Object
+    float rectangle[] = {
+         0.5f,  0.5f,  // top right
+         0.5f, -0.5f,  // bottom right
+        -0.5f, -0.5f,  // bottom left
+        -0.5f,  0.5f   // top left 
+    };
+    unsigned int indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
+    };
+
+    unsigned int VBO3, VAO3, EBO;
+    glGenVertexArrays(1, &VAO3);
+    glGenBuffers(1, &VBO3);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO3);
+    // 2. copy our vertices array in a vertex buffer for OpenGL to use
+    glBindBuffer(GL_ARRAY_BUFFER, VBO3);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangle), rectangle, GL_STATIC_DRAW);
+    // 3. copy our index array in a element buffer for OpenGL to use
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    // 4. then set the vertex attributes pointers
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6, indices, GL_STATIC_DRAW);
 
     std::string vertexShader =
         "#version 330 core\n"
@@ -245,11 +281,15 @@ int main()
 
         glUseProgram(shader);
 
-        glBindVertexArray(VAO1);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glBindVertexArray(VAO1);
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glBindVertexArray(VAO2);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glBindVertexArray(VAO2);
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glBindVertexArray(VAO3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
 #if IMGUI
         // Rendering

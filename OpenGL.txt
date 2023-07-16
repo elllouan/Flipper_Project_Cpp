@@ -20,6 +20,8 @@ Some definitions:
 - VAO for Vertex Array Object 
 	is an OpenGL object that aims to tell how to access the data of a bounded VBO.
 https://www.youtube.com/watch?v=Ktp1P4J04Gw
+- EBO for Element Buffer Object
+	is a buffer, just like a VBO, that stores indices that OpenGL uses to decide what vertices to draw. It helps avoiding overlapping.
 
 
 // 0. copy our vertices array in a buffer for OpenGL to use
