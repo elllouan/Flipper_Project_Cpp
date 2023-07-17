@@ -4,11 +4,6 @@
 
 #include "shader.hpp"
 
-// turns the header to a .cpp
-#define STB_IMAGE_IMPLEMENTATION
-// load a image loader lib
-#include "stb_image.h"
-
 #if IMGUI
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -195,60 +190,41 @@ int main()
 #endif
 
     // Draw a rectangle with 2 triangles using Element Buffer Object
-    float triangle[] = {
-        /*-- position --*/  /*--- color ---*/ /*--- texture ---*/
-         0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.0f,
-        -0.3f, -0.3f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-         0.3f, -0.3f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f
+    float rectangle[] = {
+        /*-- position --*/  /*--- color ---*/
+         0.3f,  0.5f, 0.0f, 1.0f,  0.0f, 0.0f,  // top right
+         0.3f, -0.5f, 0.0f, 1.0f,  0.0f, 0.0f,  // bottom right
+        -0.3f, -0.5f, 0.0f, 1.0f,  0.0f, 0.0f,  // bottom left
+        -0.3f,  0.5f, 0.0f, 1.0f,  0.0f, 0.0f   // top left 
     };
-
     unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 2,   // first triangle
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
     };
 
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
+    // 2. copy our vertices array in a vertex buffer for OpenGL to use
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangle), rectangle, GL_STATIC_DRAW);
+    // 3. copy our index array in a element buffer for OpenGL to use
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    // 4. then set the vertex attributes pointers
+    // first set the position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
+    // second set the color
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
-    glEnableVertexAttribArray(2);
 
-    // Load an image
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\pikachu.png", 
-                                    &width, &height, &nrChannels, 0);
-    if (!data)
-    {
-        std::cerr << "Fail to open file.\n";
-    }
-
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // Free image data
-    stbi_image_free(data);
-
-    // Shaders for printing a triangle
+    // Shaders for printing a rectangle
     Shader myShader = Shader();
-    unsigned int shaderTriProg = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
+    unsigned int shaderRecProg = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -270,13 +246,31 @@ int main()
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Bind Texture first
-        glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-
-        // Render
         myShader.useProgram();
+
+        // Draw a yellow rectangle
         glBindVertexArray(VAO); // No need to call it here since there is only one VAO and we never unbind it
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        
+
+        /* CODE EXAMPLE FOR UNIFORMS */
+
+        // Changes the color gradually
+        // float timeValue = glfwGetTime();
+        // Rotate at 180° per second
+        // float rotateX = cos(timeValue*3.14/50);
+        // float rotateY = sin(timeValue*3.14/50);
+        // float blueValue = (sin(timeValue) / 2.0f) + 0.5f;
+
+        // Finding the uniform location does not require you to use the shader program first,
+		// but updating a uniform does require you to first use the program (by calling glUseProgram),
+		// because it sets the uniform on the currently active shader program.
+        
+        // Rotate
+        // float values[2] = {rotateX, rotateY};
+        // myShader.setFloat("rotate2D", values, 2);
+        // myShader.setFloat("myBlue", &blueValue);
+
 
 #if IMGUI
         // Rendering
@@ -299,11 +293,9 @@ int main()
     ImGui::DestroyContext();
 #endif
 
-    // Optional
+    
     // glDeleteVertexArrays(1, &VAO);
     // glDeleteBuffers(1, &VBO);
-
-    // Not optional
     myShader.deleteProgram();
     glfwDestroyWindow(window);
     glfwTerminate();

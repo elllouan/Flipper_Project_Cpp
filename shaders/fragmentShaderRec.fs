@@ -2,11 +2,13 @@
 
 out vec4 fragColor;
 
+in vec2 TexCoord;
 in vec4 vertexColor;
 
-uniform float myBlue;
+// Tex object
+uniform sampler2D ourTex;
 
 void main()
 {
-	fragColor = vec4(vertexColor.rg, myBlue, 1.0f);
+    fragColor = texture(ourTex, TexCoord);
 }

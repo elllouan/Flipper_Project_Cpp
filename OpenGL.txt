@@ -41,8 +41,13 @@ Create simple shaders:
 	5.
 	6.
 
+Methods encountered:
+glGen[Buffers/Arrays], glBind[Buffers/Arrays], glVertexAttribPointer, glEnableVertexAttribArray, glDraw[Buffers/Arrays],
+glCreate[Shader/Program], glCompileShader, glAttachShader, glLinkProgram, glValidateProgram, glDelete[Buffers/Arrays/Shader],
+glUseProgram, glDeleteProgram
 
-CHAP 2: Shaders with GLSL
+
+CHAP 2: Shaders and uniforms with GLSL
 
 	1. Transfer data from one shader to another one by using 'in' and 'out' keywords.
 	2. Uniforms are another way to pass data from our application on the CPU to the shaders on the GPU.
@@ -51,3 +56,20 @@ CHAP 2: Shaders with GLSL
 		but updating a uniform does require you to first use the program (by calling glUseProgram),
 		because it sets the uniform on the currently active shader program.
 	3. 
+
+Methods encountered:
+glDrawElements, glUniform, glGetUniformLocation, glUniform[1/2/3/4][f/i/b]
+
+
+CHAP 3: Textures
+
+	1. Texture wrapping: GL_[MIRRORED]_REPEAT / GL_CLAMP_TO_[EDGE/BORDER]
+	2. Filtering methods: GL_[LINEAR/NEAREST] for magnifying (scaling upwards) or minifying (scaling downwards) a texture
+	3. Mipmaps helps limiting the overhead of rendering small pieces of texture that are located next to bigger high resolution textures.
+		It is a collection of texture images where each subsequent texture is twice as small compared to the previous one.
+	4. Loading various type of images with stb_image.h
+	5. Generating a texture
+	6. Samplers ...
+
+Methods encountered:
+glTexParameter[f/i/iv/fv], glGenerateMipmap, glGenTextures, glBindTexture[s], glTexImage[1/2/3]D, 
