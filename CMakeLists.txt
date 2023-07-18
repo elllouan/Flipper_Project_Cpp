@@ -14,7 +14,7 @@ file(GLOB IMGUI_SRC_FILE ${IMGUI_ROOT_FOLDER}/*.cpp)
 
 if(MSVC)
 message("Compiling with Microsoft Visual Compiler (MSVC)")
-add_definitions(-DWINDOW_MSVC) # add_compile_definiftions does not work for this version of cmake
+add_definitions(-DWINDOWS_MSVC) # add_compile_definiftions does not work for this version of cmake
 
 add_executable(${EXE} 
             src/main.cpp

@@ -7,11 +7,11 @@ layout(location = 2) in vec2 texCoord;
 out vec4 vertexColor;
 out vec2 TexCoord;
 
-// uniform vec2 rotate2D;
+uniform float diagTranslation;
 
 void main()
 {
-	gl_Position = position;
+	gl_Position = vec4(position.x + diagTranslation, position.y + diagTranslation, position.zw);
     vertexColor = color;
     TexCoord = texCoord;
 }

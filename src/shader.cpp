@@ -37,7 +37,9 @@ Shader::createShaderProgram(const std::string &vertexShaderFileName,
     const std::string &fragmentShaderFileName)
 {
     m_program = glCreateProgram();
-
+    // m_vertexShader = parse(vertexShaderFileName);
+    // m_fragmentShader = parse(m_fragmentShader);
+    
     // Compile the vertex shader
     unsigned int vs = compile(vertexShaderFileName, GL_VERTEX_SHADER);
     // Compile the fragment shader

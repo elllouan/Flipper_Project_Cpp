@@ -16,7 +16,7 @@
 #endif
 
 // Either GLAD or GLEW
-#if WINDOW_MSVC
+#if WINDOWS_MSVC
 #include <glad/glad.h>
 #else
 #include <GL/glew.h>
@@ -157,7 +157,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
 
-#if WINDOW_MSVC
+#if WINDOWS_MSVC
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -195,24 +195,30 @@ int main()
 #endif
 
     // Draw a rectangle with 2 triangles using Element Buffer Object
-    float triangle[] = {
+    float rect[] = {
         /*-- position --*/  /*--- color ---*/ /*--- texture ---*/
-         0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.0f,
-        -0.3f, -0.3f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-         0.3f, -0.3f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f
+        -0.25f, -0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+         0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+         0.25f, -0.25f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
     };
 
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 2,   // first triangle
+        0, 2, 3    // second triangle
     };
 
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rect), rect, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
@@ -222,24 +228,48 @@ int main()
 
     // Load an image
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\pikachu.png", 
+    unsigned char *data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\container.jpg", 
                                     &width, &height, &nrChannels, 0);
     if (!data)
     {
         std::cerr << "Fail to open file.\n";
     }
 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    unsigned int texture1, texture2;
+    glGenTextures(1, &texture1);
+
+    glBindTexture(GL_TEXTURE_2D, texture1); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(data);
+
+    // stbi_set_flip_vertically_on_load(true);
+    data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\bluesand.jpg", 
+                    &width, &height, &nrChannels, 0);
+
+    if (!data)
+    {
+        std::cerr << "Fail to open file.\n";
+    }
+
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -251,6 +281,11 @@ int main()
     unsigned int shaderTriProg = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // Always use the shader program before setting uniforms
+    myShader.useProgram();
+    myShader.setInt("texture1", 0);
+    myShader.setInt("texture2", 1);
 
     // Render loop
     while(!glfwWindowShouldClose(window))
@@ -271,12 +306,22 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Bind Texture first
-        glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
         // Render
         myShader.useProgram();
         glBindVertexArray(VAO); // No need to call it here since there is only one VAO and we never unbind it
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)0);
+
+        // The value 0 or 1 ensures each uniform sampler corresponds to the proper texture unit. You should get the following result
+        myShader.setInt("texture1", 0);
+        myShader.setInt("texture2", 1);
+
+        // float diagTranslation = sqrt(0.5f)*sin(glfwGetTime()*3.14/5);
+        // myShader.setFloat("diagTranslation", &diagTranslation);
 
 #if IMGUI
         // Rendering

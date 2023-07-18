@@ -69,7 +69,9 @@ CHAP 3: Textures
 		It is a collection of texture images where each subsequent texture is twice as small compared to the previous one.
 	4. Loading various type of images with stb_image.h
 	5. Generating a texture
-	6. Samplers ...
+	6. Samplers are store textures that we load. They are used in the fragment shader to map the texture coordonates with our actual texture.
+	7. Texture Units allow us to bind textures (or images) to a constant called GL_TEXTURE[0..15]. There 16 available with OpenGL.
+		We do this by first activate the texture unit with glActiveTexture and we binf the desired texture to it afterwards. 
 
 Methods encountered:
-glTexParameter[f/i/iv/fv], glGenerateMipmap, glGenTextures, glBindTexture[s], glTexImage[1/2/3]D, 
+glTexParameter[f/i/iv/fv], glGenerateMipmap, glGenTextures, glBindTexture[s], glTexImage[1/2/3]D, glActiveTexture

@@ -5,10 +5,12 @@ out vec4 fragColor;
 in vec2 TexCoord;
 in vec4 vertexColor;
 
-// Tex object
-uniform sampler2D ourTex;
+// Texture object
+uniform sampler2D texture1;
+uniform sampler2D texture2;
 
 void main()
 {
-    fragColor = texture(ourTex, TexCoord);
+    // 80% of the first texture + 20% of the second one
+    fragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.5) * vertexColor;
 }
