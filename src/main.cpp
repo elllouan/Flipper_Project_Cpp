@@ -197,10 +197,10 @@ int main()
     // Draw a rectangle with 2 triangles using Element Buffer Object
     float rect[] = {
         /*-- position --*/  /*--- color ---*/ /*--- texture ---*/
-        -0.25f, -0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-        -0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-         0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-         0.25f, -0.25f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+        -0.25f, -0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        -0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+         0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+         0.25f, -0.25f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
     };
 
     unsigned int indices[] = {  // note that we start from 0!
@@ -228,6 +228,7 @@ int main()
 
     // Load an image
     int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\container.jpg", 
                                     &width, &height, &nrChannels, 0);
     if (!data)
@@ -252,8 +253,7 @@ int main()
 
     stbi_image_free(data);
 
-    // stbi_set_flip_vertically_on_load(true);
-    data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\bluesand.jpg", 
+    data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\smiley.jpg", 
                     &width, &height, &nrChannels, 0);
 
     if (!data)
@@ -264,11 +264,11 @@ int main()
     glGenTextures(1, &texture2);
     glBindTexture(GL_TEXTURE_2D, texture2);
     // set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -345,8 +345,9 @@ int main()
 #endif
 
     // Optional
-    // glDeleteVertexArrays(1, &VAO);
-    // glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
 
     // Not optional
     myShader.deleteProgram();
