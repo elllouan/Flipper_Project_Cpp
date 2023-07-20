@@ -79,3 +79,13 @@ glTexParameter[f/i/iv/fv], glGenerateMipmap, glGenTextures, glBindTexture[s], gl
 
 IMPORTANT TO REMEMBER:
 	- Bind (buffers, arrays, textures) first, use the shader program and modify uniform.
+
+
+CHAP 4: Transformations
+
+	1. Homogeneous coordinate is the 4th coordinate of a position vertex and is useful to perform translation using a matrix.
+	2. Quaternions prevent from the Gimbal lock problem ...
+	3. GLM for OpenGL Mathematics is a math library aimed at OpenGL: https://github.com/g-truc/glm/tree/master.
+		Functions: glm::rotate(glm::mat4, glm::radians, glm::vec3), glm::translate(), glm::scale()
+
+

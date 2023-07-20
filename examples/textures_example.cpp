@@ -24,11 +24,6 @@
 
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
-// Include for GLM headers
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
@@ -281,19 +276,9 @@ int main()
     // Free image data
     stbi_image_free(data);
 
-    // Transformations
-    // Defines a 3D vector with its homogeneous coordinate set to 1.0
-    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
-    // Declares the identity matrix
-    glm::mat4 trans = glm::mat4(1.0f);
-    // Build a translation matrix to translate a 3D vector to 1 on both x and y-axis
-    trans = glm::translate(trans, glm::vec3(0.75f, 0.75f, 0.0f));
-    trans = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
-    // trans = glm::scale(trans, glm::vec3(0.75f, 0.75f, 0.0f));
-
     // Shaders for printing a triangle
     Shader myShader = Shader();
-    unsigned int shaderProg = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
+    unsigned int shaderTriProg = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -326,12 +311,6 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // Transform the drawing
-        glm::mat4 trans = glm::mat4(1.0f);
-        // Build a translation matrix to translate and then rotate
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
-        trans = glm::translate(trans, glm::vec3(0.75f, -0.75f, 0.0f));
-
         // Render
         myShader.useProgram();
         glBindVertexArray(VAO); // No need to call it here since there is only one VAO and we never unbind it
@@ -341,10 +320,8 @@ int main()
         myShader.setInt("texture1", 0);
         myShader.setInt("texture2", 1);
 
-        // Modify the uniform matrix
-        glUniformMatrix4fv(glGetUniformLocation(shaderProg, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
-
-        
+        // float diagTranslation = sqrt(0.5f)*sin(glfwGetTime()*3.14/5);
+        // myShader.setFloat("diagTranslation", &diagTranslation);
 
 #if IMGUI
         // Rendering

@@ -31,6 +31,7 @@ target_include_directories(${EXE}
                 PRIVATE ${CMAKE_SOURCE_DIR}/include
                 PUBLIC ${GLEW_ROOT_FOLDER}/include
                 PUBLIC ${GLFW_ROOT_FOLDER}/include
+                PUBLIC "C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\dependencies\\glm"
                 # PUBLIC ${IMGUI_ROOT_FOLDER}
                 # PUBLIC ${IMGUI_ROOT_FOLDER}/misc/cpp
                 # PUBLIC ${IMGUI_ROOT_FOLDER}/backends

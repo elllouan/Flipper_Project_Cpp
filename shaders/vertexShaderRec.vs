@@ -9,11 +9,13 @@ out vec2 Tex1Coord;
 out vec2 Tex2Coord;
 
 uniform float diagTranslation;
+uniform mat4 transform;
 
 void main()
 {
-	gl_Position = vec4(position.x + diagTranslation, position.y + diagTranslation, position.zw);
+	// gl_Position = vec4(position.x + diagTranslation, position.y + diagTranslation, position.zw);
+    gl_Position = transform * position;
     vertexColor = color;
-    Tex1Coord = vec2(TexCoord.s*2, TexCoord.t*2);
-    Tex2Coord = vec2(TexCoord.s*4, TexCoord.t*4);
+    Tex1Coord = vec2(TexCoord.s, TexCoord.t);
+    Tex2Coord = vec2(TexCoord.s, TexCoord.t);
 }
