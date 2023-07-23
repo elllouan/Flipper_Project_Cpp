@@ -30,7 +30,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Some global variables
-// const float cameraSpeed = 0.05;
+float turnY = 0.0, turnX = 0.0;
 glm::vec3 cameraPos = glm::vec3(0.0, 0.0, 3.0);
 glm::vec3 cameraFront = glm::vec3(0.0, 0.0, -1.0);
 glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
@@ -379,7 +379,10 @@ int main()
 
         myShader.useProgram();
 
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::rotate(view, glm::radians(turnY), cameraUp);
+        view = glm::rotate(view, glm::radians(turnX), glm::vec3(1.0, 0.0, 0.0));
+        view += glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
         glBindVertexArray(VAO1);
@@ -436,24 +439,23 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
         glfwSetWindowShouldClose(window, true);
-    }
     float cameraSpeed = static_cast<float>(2.5f * deltaTime);
+    float turnSpeed = static_cast<float>(10.0f * deltaTime);
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // Actually Z
-    {
         cameraPos += cameraSpeed * cameraFront;
-    }
-    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // Actually S
-    {
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         cameraPos -= cameraSpeed * cameraFront;
-    }
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // Actually Q
-    {
         cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    }
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // Actually D
-    {
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    }
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // Actually A
+        turnY -= turnSpeed;
+    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        turnY += turnSpeed;
+    if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        turnX -= turnSpeed;
+    if(glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        turnX += turnSpeed;
 }
