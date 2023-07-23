@@ -29,6 +29,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+// Some global variables
+// const float cameraSpeed = 0.05;
+glm::vec3 cameraPos = glm::vec3(0.0, 0.0, 3.0);
+glm::vec3 cameraFront = glm::vec3(0.0, 0.0, -1.0);
+glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
+
+float deltaTime = 0.0;
+float lastTime = 0.0;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
@@ -243,6 +252,16 @@ int main()
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
+    glm::vec3 positions[] = {
+        glm::vec3(0.0, 0.0, 0.0),
+        glm::vec3(0.5, 0.5, -0.5),
+        glm::vec3(-0.5, 0.7, 0.1),
+        glm::vec3(0.0, -0.5, 0.5),
+        glm::vec3(3.0, -2.0, -14.0),
+        glm::vec3(0.0, 0.0, -4.0),
+        glm::vec3(-5, 0.5, -0.5),
+        glm::vec3(5.0, 6.7, -5.0),
+    };
     unsigned int indices[] = {
         0, 1, 2,
         0, 2, 3,
@@ -329,6 +348,10 @@ int main()
     myShader.setInt("texture1", 0); // texture1 in the vertex shader is equal to the wood texture
     myShader.setInt("texture2", 1); // texture2 in the vertex shader is equal to the smiley texture
 
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+
     // Render loop
     while(!glfwWindowShouldClose(window))
     {
@@ -342,7 +365,9 @@ int main()
         ImGui::Text("Hello World");
         ImGui::End();
 #endif
+        deltaTime = glfwGetTime() - lastTime;
         processInput(window);
+        lastTime = glfwGetTime();
 
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -354,38 +379,21 @@ int main()
 
         myShader.useProgram();
 
-        // Switch to a world space coordinate system (model matrix)
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0, 1.0, 0.0));
-
-        // Switch to a view space coordinate system (view matrix): here we zoom out (e.g., bring the scene to the negative z-axis)
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0, 0.0, -5.0));
-
-        // Switch to a clip space coordinate system (projection matrix) 
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
         glBindVertexArray(VAO1);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+        for (size_t i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, positions[i]);
+            model = glm::rotate(model, (float)glfwGetTime(), positions[i]);
+            model = glm::scale(model, glm::vec3(0.5));
 
-        // Switch to a world space coordinate system (model matrix)
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.5, 0.5, 0.0));
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, -1.0, -1.0));
-        model = glm::scale(model, glm::vec3(0.3));
+            glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-        // Switch to a view space coordinate system (view matrix): here we zoom out (e.g., bring the scene to the negative z-axis)
-        view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0, 0.0, -2.0));
-
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 #if IMGUI
         // Rendering
@@ -430,5 +438,22 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
+    }
+    float cameraSpeed = static_cast<float>(2.5f * deltaTime);
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // Actually Z
+    {
+        cameraPos += cameraSpeed * cameraFront;
+    }
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // Actually S
+    {
+        cameraPos -= cameraSpeed * cameraFront;
+    }
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // Actually Q
+    {
+        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+    }
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // Actually D
+    {
+        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     }
 }
