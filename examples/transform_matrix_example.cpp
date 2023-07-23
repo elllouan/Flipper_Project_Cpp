@@ -200,48 +200,11 @@ int main()
 #endif
 
     float rectangles[] = {
-    /*    positions    |  textures  */
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        /*  positions   |   colors    | textures  */
+        -0.25, -0.25, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+        -0.25,  0.25, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+         0.25,  0.25, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+         0.25, -0.25, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0,
     };
     unsigned int indices[] = {
         0, 1, 2,
@@ -257,13 +220,15 @@ int main()
     glBindVertexArray(VAO1);
     glBindBuffer(GL_ARRAY_BUFFER, VBO1);
     glBufferData(GL_ARRAY_BUFFER, sizeof(rectangles), rectangles, GL_STATIC_DRAW);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO1);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO1);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)(3*sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void *)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void *)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     unsigned int woodTexture, smileyTexture;
     glGenTextures(1, &woodTexture);
@@ -318,7 +283,6 @@ int main()
     stbi_image_free(data);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_DEPTH_TEST);
 
     // Create the shader program
     Shader myShader = Shader();
@@ -345,7 +309,7 @@ int main()
         processInput(window);
 
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
@@ -354,38 +318,20 @@ int main()
 
         myShader.useProgram();
 
-        // Switch to a world space coordinate system (model matrix)
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0, 1.0, 0.0));
-
-        // Switch to a view space coordinate system (view matrix): here we zoom out (e.g., bring the scene to the negative z-axis)
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0, 0.0, -5.0));
-
-        // Switch to a clip space coordinate system (projection matrix) 
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        glm::mat4 mat = glm::mat4(1.0f);
+        mat = glm::translate(mat, glm::vec3(-0.25, -0.25, 0.0));
+        mat = glm::rotate(mat, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
 
         glBindVertexArray(VAO1);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)0);
+        glUniformMatrix4fv(glGetUniformLocation(prog, "transform"), 1, GL_FALSE, glm::value_ptr(mat));
 
-        // Switch to a world space coordinate system (model matrix)
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.5, 0.5, 0.0));
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, -1.0, -1.0));
-        model = glm::scale(model, glm::vec3(0.3));
+        mat = glm::mat4(1.0f);
+        mat = glm::translate(mat, glm::vec3(-0.5, -0.5, 0.0));
+        mat = glm::scale(mat, glm::vec3(sin(glfwGetTime())+1));
 
-        // Switch to a view space coordinate system (view matrix): here we zoom out (e.g., bring the scene to the negative z-axis)
-        view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0, 0.0, -2.0));
-
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)0);
+        glUniformMatrix4fv(glGetUniformLocation(prog, "transform"), 1, GL_FALSE, glm::value_ptr(mat));
 
 #if IMGUI
         // Rendering

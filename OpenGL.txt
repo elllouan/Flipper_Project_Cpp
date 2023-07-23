@@ -87,5 +87,37 @@ CHAP 4: Transformations
 	2. Quaternions prevent from the Gimbal lock problem ...
 	3. GLM for OpenGL Mathematics is a math library aimed at OpenGL: https://github.com/g-truc/glm/tree/master.
 		Functions: glm::rotate(glm::mat4, glm::radians, glm::vec3), glm::translate(), glm::scale()
+	4. How to assign to different textures to different elements? ==> Several calls of the glDrawElements function.
 
+IMPORTANT TO REMEMBER:
+	- Always printing a square centered and then apply transformations to it using matrices.
+	- Between 2 transformations using matrices, do not forget to reset the matrix to the identity matrix.
 
+CHAP 5: Coordinate systems
+
+	1. Local space (or Object space)
+
+	--> Model matrix
+	2. World space: In this coordinate system all items are positionned relatively to one another using a reference point in the world space.
+
+	--> View matrix
+	3. View space (or camera): This coordinate system simulates the point of view of a camera/person.
+
+	--> Projection matrix
+	4. Clip space: In this coordinate system, items are projected in a space where coordinates extend from -1.0 to 1.0 for each axis (NDC for Normalized Device Coordinates).
+		All coordinates out of that range get clipped and do not appear on the screen. We can use a projection matrix to map a more intuitive range of coordinates into these NDC.
+		The matrix projection can be broken down into two separate actions:
+			1. Orthographic projection: A container (or frustum) is specified by width, height and length. All coordinates outside the given ranges are discarded.
+										This is not complete, though. We need to add perspective to our items.
+			2. Perspective projection: This projection is performed with the homogeneous coordinate. 
+										The projection matrix maps a given frustum range to clip space, but also manipulates the w value of each vertex coordinate
+										in such a way that the further away a vertex coordinate is from the viewer, the higher this w component becomes.
+										Once the coordinates are transformed to clip space they are in the range -w to w (anything outside this range is clipped). 
+										OpenGL requires that the visible coordinates fall between the range -1.0 and 1.0 as the final vertex shader output,
+										thus once the coordinates are in clip space, perspective division is applied to the clip space coordinatesand x, y and z coordinates are divided by w.
+	
+	5. Z-Buffer (or Depth buffer) allows for handling the depth of pixels within a frame. The depth is stored within each fragment.
+		OpenGl determines which pixel should be rendered based off the depth of its fragment's z value.
+
+Methods encountered:
+gl[Enable/Disable], 

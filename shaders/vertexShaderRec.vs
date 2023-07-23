@@ -1,21 +1,19 @@
 #version 330 core
 
 layout(location = 0) in vec4 position;
-layout(location = 1) in vec4 color;
-layout(location = 2) in vec2 TexCoord;
+layout(location = 1) in vec4 texCoord;
 
-out vec4 vertexColor;
 out vec2 Tex1Coord;
 out vec2 Tex2Coord;
 
-uniform float diagTranslation;
-uniform mat4 transform;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 perspective;
+
 
 void main()
 {
-	// gl_Position = vec4(position.x + diagTranslation, position.y + diagTranslation, position.zw);
-    gl_Position = transform * position;
-    vertexColor = color;
-    Tex1Coord = vec2(TexCoord.s, TexCoord.t);
-    Tex2Coord = vec2(TexCoord.s, TexCoord.t);
+    gl_Position = perspective * view * model * position;
+    Tex1Coord = vec2(texCoord.s, texCoord.t);
+    Tex2Coord = vec2(texCoord.s, texCoord.t);
 }

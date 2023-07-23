@@ -28,7 +28,7 @@ private:
     std::string parse(const std::string &fileName);
 
 public:
-    Shader();
+    Shader() {}
     ~Shader() = default;
 
     // TODO: Error handling

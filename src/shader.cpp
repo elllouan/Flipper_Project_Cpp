@@ -4,8 +4,6 @@
 #include <fstream>
 #include <utility>
 
-Shader::Shader() {}
-
 /* --------------- Private Functions --------------- */
 
 std::string 
