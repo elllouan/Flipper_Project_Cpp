@@ -41,6 +41,7 @@ float lastTime = 0.0;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
 static std::string parseShaderFile(const std::string& fileName)
 {
@@ -353,6 +354,10 @@ int main()
     projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
 
+    // Mouse cursor settings
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // This will lock the cursor to the window
+    glfwSetCursorPosCallback(window, cursor_position_callback);
+
     // Render loop
     while(!glfwWindowShouldClose(window))
     {
@@ -380,13 +385,11 @@ int main()
 
         myShader.useProgram();
 
-        glm::vec3 direction = glm::vec3(sin(glm::radians(yaw))*cos(glm::radians(pitch)),
-                                        sin(glm::radians(pitch)),
-                                        cos(glm::radians(yaw))*cos(glm::radians(pitch)));
-        cameraTarget = cameraPos - direction;
-        // glm::mat4 view = glm::mat4(1.0f);
-        // view = glm::rotate(view, glm::radians(turnY), cameraUp);
-        // view = glm::rotate(view, glm::radians(turnX), glm::vec3(1.0, 0.0, 0.0));
+        // From my own implementation
+        // glm::vec3 direction = glm::vec3(-sin(glm::radians(yaw))*cos(glm::radians(pitch)),
+        //                                 sin(glm::radians(pitch)),
+        //                                 -cos(glm::radians(yaw))*cos(glm::radians(pitch)));
+        // cameraTarget = cameraPos + direction;
         glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
         glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
@@ -462,5 +465,31 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
         yaw -= turnSpeed;
     if(glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        yaw += turnSpeed;
+        yaw += turnSpeed;  
 }
+
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    // prev_xpos and prev_ypos are the x and y cursor's last frame coordinates
+    static double prev_xpos = xpos;
+    static double prev_ypos = ypos;
+    // R = glm::length(direction)
+    double R = 1;
+    // To dim the speed
+    double sensitivity = 0.1;
+    // Compute how much distance was traveled
+    double deltaX = (xpos-prev_xpos)*sensitivity;
+    double deltaY = (ypos-prev_ypos)*sensitivity;
+    // Deduce the correct angle offset
+    yaw += glm::atan(deltaX/R);
+    pitch += glm::atan(deltaY/R);
+    // Update cursor last frame coordinates
+    prev_xpos = xpos;
+    prev_ypos = ypos;
+
+    glm::vec3 direction = glm::vec3(-sin(glm::radians(yaw))*cos(glm::radians(pitch)),
+                                    sin(glm::radians(pitch)),
+                                    -cos(glm::radians(yaw))*cos(glm::radians(pitch)));
+    cameraTarget = cameraPos + direction;
+}
+
