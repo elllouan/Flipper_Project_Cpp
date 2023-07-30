@@ -10,8 +10,8 @@
 // @brief This class handles the view/camera coordinate system space.
 class Camera
 {
-    static constexpr unsigned int MAX_ANGLE = 170;
-    static constexpr unsigned int MIN_ANGLE = 10;
+    static constexpr float MAX_ANGLE = 80.0f;
+    static constexpr float MIN_ANGLE = 1.0f;
 
 private:
     glm::vec3 m_position;
@@ -24,9 +24,10 @@ private:
     float m_height {600.0f};
     float m_near {0.1f};
     float m_far {100.0f};
-    float m_fovy {45.0f};
+    float m_fov {45.0f};
     float m_yaw {0.0f};
     float m_pitch {0.0f};
+    float m_zoomSensitivity = {2.0f};
     float m_speed;
     float m_rotationSpeed;
 
@@ -48,15 +49,16 @@ public:
     ~Camera() = default;
 
     glm::mat4 CreateView();
-    glm::mat4 Project(float width, float height, float near, float far, float fovy);
+    glm::mat4 Project(float width, float height, float near, float far, float fov);
     glm::mat4 ChangeView(const glm::vec3& newPosition, const glm::vec3& newTarget);
     glm::mat4 UpdateView();
+    // glm::mat4 UpdatePerspective();
     void MoveRight(float timeFrame);
     void MoveLeft(float timeFrame);
     void MoveForward(float timeFrame);
     void MoveBackwards(float timeFrame);
     void SpinView(float yaw, float pitch);
-    void ZoomView(float povy, float scaleFactor);
+    void ZoomView(float fov);
     void NodView(float time, float limitAngle = glm::radians(0.0f), bool right = true);
 
     const glm::mat4&

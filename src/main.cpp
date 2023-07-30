@@ -41,16 +41,17 @@ Camera cam = Camera(cameraPos, cameraTarget);
 float deltaTime = 0.0;
 float lastTime = 0.0;
 
-unsigned int width = 1000;
+unsigned int width = 800;
 unsigned int height = 500;
 float near = 0.1f;
 float far = 100.0f;
-float fovy = 45.0f;
+float fov = 45.0f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 static std::string parseShaderFile(const std::string& fileName)
 {
@@ -145,7 +146,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -171,7 +172,7 @@ int main()
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     // Window's dimensions
-    glViewport(0,0,1000,500);
+    glViewport(0,0,width,height);
     // Sets a callback for window resizing
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -245,8 +246,10 @@ int main()
         glm::vec3(0.0, -0.5, 0.5),
         glm::vec3(3.0, -2.0, -14.0),
         glm::vec3(0.0, 0.0, -4.0),
-        glm::vec3(-5, 0.5, -0.5),
+        glm::vec3(-5.0, 0.5, -0.5),
         glm::vec3(5.0, 6.7, -5.0),
+        glm::vec3(-10.0, -17, -5.0),
+        glm::vec3(15.0, 10.0, -10.0),
     };
 
     float ground[] = {
@@ -297,8 +300,6 @@ int main()
         glBindVertexArray(VAO2);
         glBindBuffer(GL_ARRAY_BUFFER, VBO2);
         glBufferData(GL_ARRAY_BUFFER, sizeof(ground), ground, GL_STATIC_DRAW);
-        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
-        // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
@@ -308,8 +309,6 @@ int main()
 
     unsigned int woodTexture, smileyTexture;
     glGenTextures(1, &woodTexture);
-
-    // glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, woodTexture);
 
     // Wrapping methods
@@ -391,7 +390,7 @@ int main()
     cubeShader.SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
 
     cam.CreateView();
-    cam.Project(static_cast<float>(width), static_cast<float>(height), near, far, fovy);
+    cam.Project(800.0f, 600.0f, near, far, fov);
     cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
 
     // Shader groundShader = Shader();
@@ -408,6 +407,7 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Locks the cursor to the window
     glfwSetCursorPosCallback(window, cursor_position_callback); // Sets a callback for the cursor
     glfwSetMouseButtonCallback(window, mouse_button_callback); // Sets a callback for mouse's buttons
+    glfwSetScrollCallback(window, scroll_callback); // Sets a callback for mouse's buttons
 
     // Render loop
     while(!glfwWindowShouldClose(window))
@@ -439,25 +439,25 @@ int main()
         cam.UpdateView();
 
         cubeShader.UseProgram();
-
+        cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
+        cubeShader.SetMatrix4fv("view", glm::value_ptr(cam.GetViewMat()));
+        
         // Draw 10 cubes
         glBindVertexArray(VAO1);
-        for (size_t i = 0; i < 10; i++)
+        for (size_t i = 0; i < 12; i++)
         {
+            // The model matrix locates the primitives in space, therefore each primitive has its own model matrix (i.e., location)
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, positions[i]);
             model = glm::rotate(model, (float)glfwGetTime(), positions[i]);
             model = glm::scale(model, glm::vec3(0.5));
             cubeShader.SetMatrix4fv("model", glm::value_ptr(model));
-            cubeShader.SetMatrix4fv("view", glm::value_ptr(cam.GetViewMat()));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
         // groundShader.useProgram();
         // groundShader.setInt("groundSampler", 2);
-
         // glBindVertexArray(VAO2);
-
         // float shift = 0.2;
         // // Pass to next row
         // for (size_t i = 0; i < 15; i++)
@@ -471,7 +471,6 @@ int main()
         //         model = glm::rotate(model, glm::radians(-75.0f) ,glm::vec3(1.0, 0.0, 0.0));
         //         glUniformMatrix4fv(glGetUniformLocation(progGround, "model"), 1, GL_FALSE, glm::value_ptr(model));
         //         glUniformMatrix4fv(glGetUniformLocation(progGround, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
         //         glDrawArrays(GL_TRIANGLES, 0, 6);
         //     }
         // }
@@ -520,9 +519,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-    // float cameraSpeed = static_cast<float>(2.5f * deltaTime);
-    // float turnSpeed = static_cast<float>(10.0f * deltaTime);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // Actually Z
         cam.MoveForward(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -531,6 +528,8 @@ void processInput(GLFWwindow *window)
         cam.MoveLeft(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cam.MoveRight(deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+        cam.ZoomView(45.0f);
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -546,8 +545,8 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
     double deltaX = (xpos-prev_xpos)*sensitivity;
     double deltaY = (ypos-prev_ypos)*sensitivity;
     // Deduce the correct angle offset
-    yaw += glm::atan(deltaX/R);
-    pitch -= glm::atan(deltaY/R);
+    yaw -= glm::atan(deltaX/R);
+    pitch += glm::atan(deltaY/R);
     // Update cursor last frame coordinates
     prev_xpos = xpos;
     prev_ypos = ypos;
@@ -557,7 +556,15 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    // if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-        // cam.ZoomView();
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        return;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        return;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    fov -= yoffset;
+    cam.ZoomView(fov);
 }
 

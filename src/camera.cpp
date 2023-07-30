@@ -33,24 +33,27 @@ glm::mat4 Camera::CreateView()
     return m_view;
 }
 
-glm::mat4 Camera::Project(float width, float height, float near, float far, float fovy)
+glm::mat4 Camera::Project(float width, float height, float near, float far, float fov)
 {
     // TODO: Handling Error
-    if (fovy > MAX_ANGLE)
+    if (fov > MAX_ANGLE)
     {
-        m_fovy = MAX_ANGLE;
+        m_fov = MAX_ANGLE;
     }
-    else if (fovy < MIN_ANGLE)
+    else if (fov < MIN_ANGLE)
     {
-        fovy = MIN_ANGLE;
+        m_fov = MIN_ANGLE;
+    }
+    else
+    {
+        m_fov = fov;
     }
     float m_width = width;
     float m_height = height;
     float m_near = near;
     float m_far = far;
-    float m_fovy = fovy;
     m_perspective = glm::mat4(1.0f);
-    m_perspective = glm::perspective(glm::radians(fovy), m_width/m_height, m_near, m_far);
+    m_perspective = glm::perspective(glm::radians(fov), m_width/m_height, m_near, m_far);
     return m_perspective;
 }
 
@@ -105,10 +108,19 @@ void Camera::SpinView(float yaw, float pitch)
     m_target = m_position - m_direction;
 }
 
-void Camera::ZoomView(float fovy, float scaleFactor)
+void Camera::ZoomView(float fov)
 {
-    m_view *= glm::mat4(scaleFactor);
-    m_perspective *= glm::perspective(fovy, m_width/m_height, m_near, m_far);
+    // TODO: Handling Error
+    if (fov > MAX_ANGLE)
+    {
+        fov = MAX_ANGLE;
+    }
+    else if (fov < MIN_ANGLE)
+    {
+        fov = MIN_ANGLE;
+    }
+    m_fov = fov;
+    m_perspective = glm::perspective(glm::radians(m_fov), m_width/m_height, m_near, m_far);
 }
 
 
