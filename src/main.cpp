@@ -3,6 +3,7 @@
 #include <string>
 
 #include "shader.hpp"
+#include "camera.hpp"
 
 // turns the header to a .cpp
 #define STB_IMAGE_IMPLEMENTATION
@@ -34,14 +35,22 @@ float yaw = 0.0, pitch = 0.0;
 glm::vec3 cameraPos = glm::vec3(0.0, 0.0, 3.0);
 glm::vec3 cameraFront = glm::vec3(0.0, 0.0, -1.0);
 glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
-glm::vec3 cameraTarget;
+glm::vec3 cameraTarget = glm::vec3(0.0, 0.0, 2.0);
+Camera cam = Camera(cameraPos, cameraTarget);
 
 float deltaTime = 0.0;
 float lastTime = 0.0;
 
+unsigned int width = 1000;
+unsigned int height = 500;
+float near = 0.1f;
+float far = 100.0f;
+float fovy = 45.0f;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 static std::string parseShaderFile(const std::string& fileName)
 {
@@ -127,34 +136,6 @@ static unsigned int CreateShader(const std::string& vertexShader,
     return shaderProgram;
 }
 
-/*
- * @brief Create a complete VBO and VAO1, ready to be rendered out.
- * This will call all necessary functions to generate, bind, attribute and populate both VBO and VAO1.
- * (Could be better if pass structs as arguments)
- * @return Void
-*/
-static void CreateVertexAttribObject(
-    unsigned int &VBO,
-    unsigned int &VAO,
-    GLenum target,
-    const void *dataArray, 
-    int nbData,
-    GLenum usage,
-    unsigned int index,
-    int nbAttributes,
-    GLenum type,
-    const void *startPointer
-    )
-{
-    glBindVertexArray(VAO);
-    
-    glBindBuffer(target, VBO);
-    glBufferData(target, nbData*sizeof(type), dataArray, usage);
-
-    glVertexAttribPointer(index, nbAttributes, type, GL_FALSE, nbAttributes*sizeof(type), startPointer);
-    glEnableVertexAttribArray(index);
-}
-
 int main()
 {
     glfwInit();
@@ -189,7 +170,9 @@ int main()
     // Print out the current version
     std::cout << glGetString(GL_VERSION) << std::endl;
 
+    // Window's dimensions
     glViewport(0,0,1000,500);
+    // Sets a callback for window resizing
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 #if IMGUI
@@ -254,6 +237,7 @@ int main()
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
+
     glm::vec3 positions[] = {
         glm::vec3(0.0, 0.0, 0.0),
         glm::vec3(0.5, 0.5, -0.5),
@@ -264,27 +248,63 @@ int main()
         glm::vec3(-5, 0.5, -0.5),
         glm::vec3(5.0, 6.7, -5.0),
     };
-    unsigned int indices[] = {
-        0, 1, 2,
-        0, 2, 3,
+
+    float ground[] = {
+        -0.1, -0.1, 0.0, 0.0, 0.0,
+        -0.1,  0.1, 0.0, 0.0, 1.0,
+         0.1, -0.1, 0.0, 1.0, 0.0,
+
+        -0.1,  0.1, 0.0, 0.0, 1.0,
+         0.1,  0.1, 0.0, 1.0, 1.0,
+         0.1, -0.1, 0.0, 1.0, 0.0,
     };
 
-    // Loading the data
-    unsigned int VBO1, VAO1, EBO1;
-    glGenVertexArrays(1, &VAO1);
-    glGenBuffers(1, &VBO1);
-    glGenBuffers(1, &EBO1);
+    glm::vec3 tiles[] = {
+        glm::vec3(-0.9, -0.9,  1.0),
+        glm::vec3(-0.9, -0.9,  0.0),
+        glm::vec3(-0.9, -0.9, -1.0),
+        glm::vec3(-0.9, -0.9, -2.0),
+        glm::vec3(-0.9, -0.9, -3.0),
+        glm::vec3(-0.9, -0.9, -15.0),
+        glm::vec3(-0.9, -0.9, -18.0),
+        glm::vec3(-0.9, -0.9, -22.0),
+    };
 
-    glBindVertexArray(VAO1);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangles), rectangles, GL_STATIC_DRAW);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO1);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)(3*sizeof(float)));
-    glEnableVertexAttribArray(1);
+    // Loading the data for the cubes
+    unsigned int VBO1, VAO1;
+    {
+        glGenVertexArrays(1, &VAO1);
+        glGenBuffers(1, &VBO1);
+
+        glBindVertexArray(VAO1);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(rectangles), rectangles, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)(3*sizeof(float)));
+        glEnableVertexAttribArray(1);
+    }
+
+    // Loading the data for the ground
+    unsigned int VBO2, VAO2, EBO2;
+    {
+        glGenVertexArrays(1, &VAO2);
+        glGenBuffers(1, &VBO2);
+        glGenBuffers(1, &EBO2);
+
+        glBindVertexArray(VAO2);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(ground), ground, GL_STATIC_DRAW);
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
+        // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)(3*sizeof(float)));
+        glEnableVertexAttribArray(1);
+    }
 
     unsigned int woodTexture, smileyTexture;
     glGenTextures(1, &woodTexture);
@@ -338,25 +358,56 @@ int main()
     }
     stbi_image_free(data);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_DEPTH_TEST);
+    unsigned int grassTexture;
+    glGenTextures(1, &grassTexture);
+    glBindTexture(GL_TEXTURE_2D, grassTexture);
 
-    // Create the shader program
-    Shader myShader = Shader();
-    unsigned int prog = myShader.createShaderProgram("vertexShaderRec.vs", "fragmentShaderRec.fs");
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    myShader.useProgram();
-    // The second argument refers to the active texture
-    myShader.setInt("texture1", 0); // texture1 in the vertex shader is equal to the wood texture
-    myShader.setInt("texture2", 1); // texture2 in the vertex shader is equal to the smiley texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    glUniformMatrix4fv(glGetUniformLocation(prog, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+    data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\grass.jpg",
+        &width, &height, &nrChannels, 0);
+
+    if(data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to generate a 2D texture image.\n";
+    }
+    stbi_image_free(data);
+
+    // Create shaders programs
+    Shader cubeShader = Shader();
+    unsigned int progCube = cubeShader.CreateShaderProgram("vertexShaderCubes.vs", "fragmentShaderCubes.fs");
+
+    cubeShader.UseProgram();
+    cubeShader.SetInt("woodSampler", 0); // woodSampler in the vertex shader is equal to the wood texture
+    cubeShader.SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
+
+    cam.CreateView();
+    cam.Project(static_cast<float>(width), static_cast<float>(height), near, far, fovy);
+    cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
+
+    // Shader groundShader = Shader();
+    // unsigned int progGround = groundShader.createShaderProgram("vertexShaderGround.vs", "fragmentShaderGround.fs");
+    // groundShader.useProgram();
+    // groundShader.setInt("groundSampler", 2);
+    // glUniformMatrix4fv(glGetUniformLocation(progGround, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    // Some settings
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Draws filled primitives
+    glEnable(GL_DEPTH_TEST); // Enables depth consideration when drawing primitives
 
     // Mouse cursor settings
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // This will lock the cursor to the window
-    glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Locks the cursor to the window
+    glfwSetCursorPosCallback(window, cursor_position_callback); // Sets a callback for the cursor
+    glfwSetMouseButtonCallback(window, mouse_button_callback); // Sets a callback for mouse's buttons
 
     // Render loop
     while(!glfwWindowShouldClose(window))
@@ -382,17 +433,14 @@ int main()
         glBindTexture(GL_TEXTURE_2D, woodTexture);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, smileyTexture);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
 
-        myShader.useProgram();
+        cam.UpdateView();
 
-        // From my own implementation
-        // glm::vec3 direction = glm::vec3(-sin(glm::radians(yaw))*cos(glm::radians(pitch)),
-        //                                 sin(glm::radians(pitch)),
-        //                                 -cos(glm::radians(yaw))*cos(glm::radians(pitch)));
-        // cameraTarget = cameraPos + direction;
-        glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        cubeShader.UseProgram();
 
+        // Draw 10 cubes
         glBindVertexArray(VAO1);
         for (size_t i = 0; i < 10; i++)
         {
@@ -400,11 +448,34 @@ int main()
             model = glm::translate(model, positions[i]);
             model = glm::rotate(model, (float)glfwGetTime(), positions[i]);
             model = glm::scale(model, glm::vec3(0.5));
-
-            glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
+            cubeShader.SetMatrix4fv("model", glm::value_ptr(model));
+            cubeShader.SetMatrix4fv("view", glm::value_ptr(cam.GetViewMat()));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+        // groundShader.useProgram();
+        // groundShader.setInt("groundSampler", 2);
+
+        // glBindVertexArray(VAO2);
+
+        // float shift = 0.2;
+        // // Pass to next row
+        // for (size_t i = 0; i < 15; i++)
+        // {
+        //     // One row of grass
+        //     for (size_t j = 0; j < 10; j++)
+        //     {
+        //         glm::mat4 model = glm::mat4(1.0f);
+        //         model = glm::scale(model, glm::vec3(1.5, 1.5, 10));
+        //         model = glm::translate(model, glm::vec3(-0.9+shift*j, -0.9+shift*i,  1.0-i));
+        //         model = glm::rotate(model, glm::radians(-75.0f) ,glm::vec3(1.0, 0.0, 0.0));
+        //         glUniformMatrix4fv(glGetUniformLocation(progGround, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        //         glUniformMatrix4fv(glGetUniformLocation(progGround, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+        //         glDrawArrays(GL_TRIANGLES, 0, 6);
+        //     }
+        // }
+        
 
 #if IMGUI
         // Rendering
@@ -430,10 +501,12 @@ int main()
     // Optional
     glDeleteVertexArrays(1, &VAO1);
     glDeleteBuffers(1, &VBO1);
-    glDeleteBuffers(1, &EBO1);
+    glDeleteVertexArrays(1, &VAO2);
+    glDeleteBuffers(1, &VBO2);
+    glDeleteBuffers(1, &EBO2);
 
     // Not optional
-    myShader.deleteProgram();
+    cubeShader.DeleteProgram();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
@@ -448,24 +521,16 @@ void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    float cameraSpeed = static_cast<float>(2.5f * deltaTime);
-    float turnSpeed = static_cast<float>(10.0f * deltaTime);
+    // float cameraSpeed = static_cast<float>(2.5f * deltaTime);
+    // float turnSpeed = static_cast<float>(10.0f * deltaTime);
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // Actually Z
-        cameraPos -= cameraSpeed * glm::normalize(cameraPos-cameraTarget);
+        cam.MoveForward(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos += cameraSpeed * glm::normalize(cameraPos-cameraTarget);
+        cam.MoveBackwards(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // Actually Q
-        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+        cam.MoveLeft(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // Actually A
-        pitch -= turnSpeed;
-    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        pitch += turnSpeed;
-    if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-        yaw -= turnSpeed;
-    if(glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        yaw += turnSpeed;  
+        cam.MoveRight(deltaTime);
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -482,14 +547,17 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
     double deltaY = (ypos-prev_ypos)*sensitivity;
     // Deduce the correct angle offset
     yaw += glm::atan(deltaX/R);
-    pitch += glm::atan(deltaY/R);
+    pitch -= glm::atan(deltaY/R);
     // Update cursor last frame coordinates
     prev_xpos = xpos;
     prev_ypos = ypos;
 
-    glm::vec3 direction = glm::vec3(-sin(glm::radians(yaw))*cos(glm::radians(pitch)),
-                                    sin(glm::radians(pitch)),
-                                    -cos(glm::radians(yaw))*cos(glm::radians(pitch)));
-    cameraTarget = cameraPos + direction;
+    cam.SpinView(yaw, pitch);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    // if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        // cam.ZoomView();
 }
 

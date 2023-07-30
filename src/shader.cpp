@@ -7,7 +7,7 @@
 /* --------------- Private Functions --------------- */
 
 std::string 
-Shader::parse(const std::string &fileName)
+Shader::Parse(const std::string &fileName)
 {
     std::ifstream file(m_filePath+fileName);
     std::string fileContent;
@@ -31,7 +31,7 @@ Shader::parse(const std::string &fileName)
 /* --------------- Public Functions --------------- */
 
 unsigned int
-Shader::createShaderProgram(const std::string &vertexShaderFileName,
+Shader::CreateShaderProgram(const std::string &vertexShaderFileName,
     const std::string &fragmentShaderFileName)
 {
     m_program = glCreateProgram();
@@ -39,9 +39,9 @@ Shader::createShaderProgram(const std::string &vertexShaderFileName,
     // m_fragmentShader = parse(m_fragmentShader);
     
     // Compile the vertex shader
-    unsigned int vs = compile(vertexShaderFileName, GL_VERTEX_SHADER);
+    unsigned int vs = Compile(vertexShaderFileName, GL_VERTEX_SHADER);
     // Compile the fragment shader
-    unsigned int fs = compile(fragmentShaderFileName, GL_FRAGMENT_SHADER);
+    unsigned int fs = Compile(fragmentShaderFileName, GL_FRAGMENT_SHADER);
 
     // Attach all shaders in one program
     glAttachShader(m_program, vs);
@@ -73,10 +73,10 @@ Shader::createShaderProgram(const std::string &vertexShaderFileName,
 }
 
 unsigned int 
-Shader::compile(const std::string &fileName, GLenum shaderType)
+Shader::Compile(const std::string &fileName, GLenum shaderType)
 {
     m_ID = glCreateShader(shaderType);
-    m_sourceCode = parse(fileName);
+    m_sourceCode = Parse(fileName);
     const char *sourceCode = m_sourceCode.c_str();
     glShaderSource(m_ID, 1, &sourceCode, nullptr);
     glCompileShader(m_ID);
@@ -101,29 +101,29 @@ Shader::compile(const std::string &fileName, GLenum shaderType)
 }
 
 void
-Shader::useProgram()
+Shader::UseProgram()
 {
     glUseProgram(m_program);
 }
 
 void
-Shader::deleteProgram()
+Shader::DeleteProgram()
 {
     glDeleteProgram(m_program);
 }
 
 void
-Shader::setBool(const std::string &name, bool value, int size) const
+Shader::SetBool(const std::string &name, bool value, int size) const
 {         
     glUniform1i(glGetUniformLocation(m_program, name.c_str()), (int)value); 
 }
 void
-Shader::setInt(const std::string &name, int value, int size) const
+Shader::SetInt(const std::string &name, int value, int size) const
 { 
     glUniform1i(glGetUniformLocation(m_program, name.c_str()), value); 
 }
 void
-Shader::setFloat(const std::string &name, float *values, int size) const
+Shader::SetFloat(const std::string &name, float *values, int size) const
 { 
     switch (size)
     {
@@ -142,12 +142,17 @@ Shader::setFloat(const std::string &name, float *values, int size) const
     default:
         break;
     } 
-} 
+}
+
+void Shader::SetMatrix4fv(const std::string &name, const float *mat4) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(m_program, name.c_str()), 1, GL_FALSE, mat4);
+}
 
 /* --------------- Getter & Setter Functions --------------- */
 
 unsigned int 
-Shader::getShaderProgram()
+Shader::GetShaderProgram() const
 {
     return m_program;
 }
