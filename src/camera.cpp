@@ -86,17 +86,40 @@ void Camera::MoveLeft(float timeFrame)
     m_target += delta;
 }
 
-void Camera::MoveForward(float timeFrame)
+void Camera::MoveForward(float timeFrame, Mode mode)
 {
     // m_direction is by my definition m_position - m_target (<0)
-    glm::vec3 delta = m_speed*timeFrame*glm::normalize(m_direction);
-    m_position -= delta;
+    if (mode == Mode::FPS)
+    {
+        // We discard y component to keep moving across z0x plan
+        glm::vec3 delta = m_speed*timeFrame*glm::normalize(glm::vec3(m_direction.x, 0, m_direction.z));
+        m_position -= delta;
+        m_target -= delta;
+    }
+    else if (mode == Mode::NORMAL)
+    {
+        glm::vec3 delta = m_speed*timeFrame*glm::normalize(m_direction);
+        m_position -= delta;
+        m_target -= delta;
+    }
 }
 
-void Camera::MoveBackwards(float timeFrame)
+void Camera::MoveBackwards(float timeFrame, Mode mode)
 {
-    glm::vec3 delta = m_speed*timeFrame*glm::normalize(m_direction);
-    m_position += delta;
+    // m_direction is by my definition m_position - m_target (<0)
+    if (mode == Mode::FPS)
+    {
+        // We discard y component to keep moving across z0x plan
+        glm::vec3 delta = m_speed*timeFrame*glm::normalize(glm::vec3(m_direction.x, 0, m_direction.z));
+        m_position += delta;
+        m_target += delta;
+    }
+    else if (mode == Mode::NORMAL)
+    {
+        glm::vec3 delta = m_speed*timeFrame*glm::normalize(m_direction);
+        m_position += delta;
+        m_target += delta;
+    }
 }
 
 

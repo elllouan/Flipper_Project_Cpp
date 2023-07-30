@@ -35,8 +35,8 @@ float yaw = 0.0, pitch = 0.0;
 glm::vec3 cameraPos = glm::vec3(0.0, 0.0, 3.0);
 glm::vec3 cameraFront = glm::vec3(0.0, 0.0, -1.0);
 glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
-glm::vec3 cameraTarget = glm::vec3(0.0, 0.0, 2.0);
-Camera cam = Camera(cameraPos, cameraTarget);
+glm::vec3 cameraTarget = glm::vec3(0.0, 0.0, 0.0);
+Camera fps = Camera(cameraPos, cameraTarget);
 
 float deltaTime = 0.0;
 float lastTime = 0.0;
@@ -52,90 +52,6 @@ void processInput(GLFWwindow *window);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-
-static std::string parseShaderFile(const std::string& fileName)
-{
-    std::string path = "C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\shaders\\";
-    std::ifstream file(path+fileName);
-    std::string fileContent;
-
-    if (file)
-    {
-        std::string line;
-        while (std::getline(file, line))
-        {
-            fileContent += line + "\n";
-        }
-    }
-    else
-    {
-        std::cerr << "Failed to open file: " << fileName << std::endl;
-    }
-    return fileContent;
-}
-
-/*
- * @brief Compile the given shader.
- * @param shaderType Any type of shader (preferably use macros).
- * @param source Source code of the shader.
- * @return The shader's ID (unsigned int).
-*/
-static unsigned int CompileShader(unsigned int shaderType,
-    const std::string& source)
-{
-    unsigned int shaderId = glCreateShader(shaderType);
-    const char* shaderSrc = source.c_str();
-    glShaderSource(shaderId, 1, &shaderSrc, nullptr);
-    glCompileShader(shaderId);
-
-    // Shader Compilation Error Handling
-    int result;
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-        int length;
-        glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
-        // Allocate data dynamically on the stack with alloca
-        char* message = (char *)alloca(length * sizeof(char));
-        glGetShaderInfoLog(shaderId, length, &length, message);
-        std::cout << message << std::endl;
-    }
-    return shaderId;
-}
-
-/*
- * @brief Create (Compile/Attach/Link) the given shaders sources and a program.
- * @return A shader program (unsigned int).
-*/
-static unsigned int CreateShader(const std::string& vertexShader,
-    const std::string& fragmentShader)
-{
-    unsigned int shaderProgram = glCreateProgram();
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-    glAttachShader(shaderProgram, vs);
-    glAttachShader(shaderProgram, fs);
-    glLinkProgram(shaderProgram);
-
-    // Shader Link Error Handling
-    int success;
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        int length;
-        glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char *)alloca(length * sizeof(char));
-        glGetProgramInfoLog(shaderProgram, 512, NULL, message);
-        std::cout << message << std::endl;
-    }
-
-    glValidateProgram(shaderProgram);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return shaderProgram;
-}
 
 int main()
 {
@@ -389,9 +305,9 @@ int main()
     cubeShader.SetInt("woodSampler", 0); // woodSampler in the vertex shader is equal to the wood texture
     cubeShader.SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
 
-    cam.CreateView();
-    cam.Project(800.0f, 600.0f, near, far, fov);
-    cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
+    fps.CreateView();
+    fps.Project(800.0f, 600.0f, near, far, fov);
+    cubeShader.SetMatrix4fv("perspective", glm::value_ptr(fps.GetPerspectiveMat()));
 
     // Shader groundShader = Shader();
     // unsigned int progGround = groundShader.createShaderProgram("vertexShaderGround.vs", "fragmentShaderGround.fs");
@@ -436,11 +352,11 @@ int main()
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, grassTexture);
 
-        cam.UpdateView();
+        fps.UpdateView();
 
         cubeShader.UseProgram();
-        cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
-        cubeShader.SetMatrix4fv("view", glm::value_ptr(cam.GetViewMat()));
+        cubeShader.SetMatrix4fv("perspective", glm::value_ptr(fps.GetPerspectiveMat()));
+        cubeShader.SetMatrix4fv("view", glm::value_ptr(fps.GetViewMat()));
         
         // Draw 10 cubes
         glBindVertexArray(VAO1);
@@ -521,15 +437,15 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // Actually Z
-        cam.MoveForward(deltaTime);
+        fps.MoveForward(deltaTime, Mode::FPS);
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cam.MoveBackwards(deltaTime);
+        fps.MoveBackwards(deltaTime, Mode::FPS);
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // Actually Q
-        cam.MoveLeft(deltaTime);
+        fps.MoveLeft(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cam.MoveRight(deltaTime);
+        fps.MoveRight(deltaTime);
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-        cam.ZoomView(45.0f);
+        fps.ZoomView(45.0f);
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -551,7 +467,7 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
     prev_xpos = xpos;
     prev_ypos = ypos;
 
-    cam.SpinView(yaw, pitch);
+    fps.SpinView(yaw, pitch);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -565,6 +481,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     fov -= yoffset;
-    cam.ZoomView(fov);
+    fps.ZoomView(fov);
 }
 

@@ -7,6 +7,11 @@
 
 #include <array>
 
+enum class Mode {
+    FPS,
+    NORMAL,
+};
+
 // @brief This class handles the view/camera coordinate system space.
 class Camera
 {
@@ -55,8 +60,8 @@ public:
     // glm::mat4 UpdatePerspective();
     void MoveRight(float timeFrame);
     void MoveLeft(float timeFrame);
-    void MoveForward(float timeFrame);
-    void MoveBackwards(float timeFrame);
+    void MoveForward(float timeFrame, Mode mode);
+    void MoveBackwards(float timeFrame, Mode mode);
     void SpinView(float yaw, float pitch);
     void ZoomView(float fov);
     void NodView(float time, float limitAngle = glm::radians(0.0f), bool right = true);
