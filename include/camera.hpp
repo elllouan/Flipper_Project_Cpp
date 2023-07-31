@@ -58,10 +58,11 @@ public:
     glm::mat4 ChangeView(const glm::vec3& newPosition, const glm::vec3& newTarget);
     glm::mat4 UpdateView();
     // glm::mat4 UpdatePerspective();
-    void MoveRight(float timeFrame);
-    void MoveLeft(float timeFrame);
-    void MoveForward(float timeFrame, Mode mode);
-    void MoveBackwards(float timeFrame, Mode mode);
+    void MoveRight(float dt);
+    void MoveLeft(float dt);
+    void MoveForward(float dt, Mode mode);
+    void MoveBackwards(float dt, Mode mode);
+    bool JumpView(float dt);
     void SpinView(float yaw, float pitch);
     void ZoomView(float fov);
     void NodView(float time, float limitAngle = glm::radians(0.0f), bool right = true);

@@ -1,5 +1,6 @@
 #include "camera.hpp"
 
+#include <iostream>
 #include <utility>
 
 void
@@ -72,56 +73,81 @@ glm::mat4 Camera::UpdateView()
     return m_view;
 }
 
-void Camera::MoveRight(float timeFrame)
+void Camera::MoveRight(float dt)
 {
-    glm::vec3 delta = m_speed*timeFrame*glm::normalize(glm::cross(m_up, m_direction));
+    glm::vec3 delta = m_speed*dt*glm::normalize(glm::cross(m_up, m_direction));
     m_position += delta;
     m_target += delta;
 }
 
-void Camera::MoveLeft(float timeFrame)
+void Camera::MoveLeft(float dt)
 {
-    glm::vec3 delta = m_speed*timeFrame*glm::normalize(glm::cross(m_direction, m_up));
+    glm::vec3 delta = m_speed*dt*glm::normalize(glm::cross(m_direction, m_up));
     m_position += delta;
     m_target += delta;
 }
 
-void Camera::MoveForward(float timeFrame, Mode mode)
+void Camera::MoveForward(float dt, Mode mode)
 {
     // m_direction is by my definition m_position - m_target (<0)
     if (mode == Mode::FPS)
     {
         // We discard y component to keep moving across z0x plan
-        glm::vec3 delta = m_speed*timeFrame*glm::normalize(glm::vec3(m_direction.x, 0, m_direction.z));
+        glm::vec3 delta = m_speed*dt*glm::normalize(glm::vec3(m_direction.x, 0, m_direction.z));
         m_position -= delta;
         m_target -= delta;
     }
     else if (mode == Mode::NORMAL)
     {
-        glm::vec3 delta = m_speed*timeFrame*glm::normalize(m_direction);
+        glm::vec3 delta = m_speed*dt*glm::normalize(m_direction);
         m_position -= delta;
         m_target -= delta;
     }
 }
 
-void Camera::MoveBackwards(float timeFrame, Mode mode)
+void Camera::MoveBackwards(float dt, Mode mode)
 {
     // m_direction is by my definition m_position - m_target (<0)
     if (mode == Mode::FPS)
     {
         // We discard y component to keep moving across z0x plan
-        glm::vec3 delta = m_speed*timeFrame*glm::normalize(glm::vec3(m_direction.x, 0, m_direction.z));
+        glm::vec3 delta = m_speed*dt*glm::normalize(glm::vec3(m_direction.x, 0, m_direction.z));
         m_position += delta;
         m_target += delta;
     }
     else if (mode == Mode::NORMAL)
     {
-        glm::vec3 delta = m_speed*timeFrame*glm::normalize(m_direction);
+        glm::vec3 delta = m_speed*dt*glm::normalize(m_direction);
         m_position += delta;
         m_target += delta;
     }
 }
 
+// @brief To jump is like translating the camera's position and target up- and downwards
+bool Camera::JumpView(float dt)
+{
+    static float v0_y = 5.0f;
+    static float dv = v0_y;
+    
+    float g = 9.81;
+    // acceleration
+    float da = -0.5f*g;
+    if (m_position.y >= 0)
+    {
+        // speed
+        dv += da*dt;
+        // position
+        m_position.y += dv*dt;
+        m_target.y += dv*dt;
+    }
+    else
+    {
+        dv = v0_y;
+        m_position.y = 0;
+        return false;
+    }
+    return true;
+}
 
 void Camera::SpinView(float yaw, float pitch)
 {

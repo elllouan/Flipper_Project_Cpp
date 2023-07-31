@@ -40,6 +40,7 @@ Camera fps = Camera(cameraPos, cameraTarget);
 
 float deltaTime = 0.0;
 float lastTime = 0.0;
+bool jump = false;
 
 unsigned int width = 800;
 unsigned int height = 500;
@@ -309,12 +310,6 @@ int main()
     fps.Project(800.0f, 600.0f, near, far, fov);
     cubeShader.SetMatrix4fv("perspective", glm::value_ptr(fps.GetPerspectiveMat()));
 
-    // Shader groundShader = Shader();
-    // unsigned int progGround = groundShader.createShaderProgram("vertexShaderGround.vs", "fragmentShaderGround.fs");
-    // groundShader.useProgram();
-    // groundShader.setInt("groundSampler", 2);
-    // glUniformMatrix4fv(glGetUniformLocation(progGround, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
-
     // Some settings
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Draws filled primitives
     glEnable(GL_DEPTH_TEST); // Enables depth consideration when drawing primitives
@@ -352,6 +347,9 @@ int main()
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, grassTexture);
 
+        if (jump)
+            jump = fps.JumpView(deltaTime);
+        
         fps.UpdateView();
 
         cubeShader.UseProgram();
@@ -370,27 +368,6 @@ int main()
             cubeShader.SetMatrix4fv("model", glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-
-        // groundShader.useProgram();
-        // groundShader.setInt("groundSampler", 2);
-        // glBindVertexArray(VAO2);
-        // float shift = 0.2;
-        // // Pass to next row
-        // for (size_t i = 0; i < 15; i++)
-        // {
-        //     // One row of grass
-        //     for (size_t j = 0; j < 10; j++)
-        //     {
-        //         glm::mat4 model = glm::mat4(1.0f);
-        //         model = glm::scale(model, glm::vec3(1.5, 1.5, 10));
-        //         model = glm::translate(model, glm::vec3(-0.9+shift*j, -0.9+shift*i,  1.0-i));
-        //         model = glm::rotate(model, glm::radians(-75.0f) ,glm::vec3(1.0, 0.0, 0.0));
-        //         glUniformMatrix4fv(glGetUniformLocation(progGround, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        //         glUniformMatrix4fv(glGetUniformLocation(progGround, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        //         glDrawArrays(GL_TRIANGLES, 0, 6);
-        //     }
-        // }
-        
 
 #if IMGUI
         // Rendering
@@ -444,6 +421,8 @@ void processInput(GLFWwindow *window)
         fps.MoveLeft(deltaTime);
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         fps.MoveRight(deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        jump = true;
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
         fps.ZoomView(45.0f);
 }
