@@ -59,9 +59,9 @@ Camera::Camera(glm::vec3 &initialPosition,
                glm::vec3 &y,
                float speed,
                float rotationSpeed):
-    m_position {std::move(initialPosition)},
-    m_target {std::move(initialTarget)},
-    y {std::move(y)},
+    m_position {initialPosition},
+    m_target {initialTarget},
+    y {y},
     m_speed {speed},
     m_rotationSpeed {rotationSpeed}
 {

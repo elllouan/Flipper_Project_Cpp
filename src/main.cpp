@@ -4,6 +4,7 @@
 
 #include "shader.hpp"
 #include "camera.hpp"
+#include "item.hpp"
 
 // turns the header to a .cpp
 #define STB_IMAGE_IMPLEMENTATION
@@ -36,6 +37,7 @@ glm::vec3 cameraPos = glm::vec3(0.0, 0.0, 3.0);
 glm::vec3 cameraFront = glm::vec3(0.0, 0.0, -1.0);
 glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
 glm::vec3 cameraTarget = glm::vec3(0.0, 0.0, 2.0);
+// cam is declared global because it needs to be accessed from the callbacks
 Camera cam = Camera(cameraPos, cameraTarget);
 
 float deltaTime = 0.0;
@@ -273,113 +275,14 @@ int main()
         glm::vec3(-0.9, -0.9, -22.0),
     };
 
-
-    // Loading the data for the cubes
-    unsigned int VBO1, VAO1;
-    {
-        glGenVertexArrays(1, &VAO1);
-        glGenBuffers(1, &VBO1);
-
-        glBindVertexArray(VAO1);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(rectangles), rectangles, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)(3*sizeof(float)));
-        glEnableVertexAttribArray(1);
-    }
-
-    // Loading the data for the ground
-    unsigned int VBO2, VAO2, EBO2;
-    {
-        glGenVertexArrays(1, &VAO2);
-        glGenBuffers(1, &VBO2);
-        glGenBuffers(1, &EBO2);
-
-        glBindVertexArray(VAO2);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(ground), ground, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void *)(3*sizeof(float)));
-        glEnableVertexAttribArray(1);
-    }
-
+    // Create an item
     unsigned int woodTexture, smileyTexture;
-    glGenTextures(1, &woodTexture);
-    glBindTexture(GL_TEXTURE_2D, woodTexture);
-
-    // Wrapping methods
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // Filtering methods
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\container.jpg", 
-        &width, &height, &nrChannels, 0);
-
-    if(data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to generate a 2D texture image.\n";
-    }
-    stbi_image_free(data);
-
-
-    glGenTextures(1, &smileyTexture);
-    glBindTexture(GL_TEXTURE_2D, smileyTexture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\smiley.jpg",
-        &width, &height, &nrChannels, 0);
-
-    if(data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to generate a 2D texture image.\n";
-    }
-    stbi_image_free(data);
-
-    unsigned int grassTexture;
-    glGenTextures(1, &grassTexture);
-    glBindTexture(GL_TEXTURE_2D, grassTexture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    data = stbi_load("C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\img\\grass.jpg",
-        &width, &height, &nrChannels, 0);
-
-    if(data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to generate a 2D texture image.\n";
-    }
-    stbi_image_free(data);
+    Item cube = Item(rectangles, sizeof(rectangles));
+    cube.EnableVertexAttrib(0, 3, 5*sizeof(float), 0);
+    cube.EnableVertexAttrib(1, 2, 5*sizeof(float), 3*sizeof(float));
+    cube.AddTexture2D(woodTexture, "container.jpg");
+    cube.AddTexture2D(smileyTexture, "smiley.jpg");
+    cube.BindTextures();
 
     // Create shaders programs
     Shader cubeShader = Shader();
@@ -389,15 +292,10 @@ int main()
     cubeShader.SetInt("woodSampler", 0); // woodSampler in the vertex shader is equal to the wood texture
     cubeShader.SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
 
+    // cam is declared global because it needs to be accessed from the callbacks
     cam.CreateView();
     cam.Project(800.0f, 600.0f, near, far, fov);
     cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
-
-    // Shader groundShader = Shader();
-    // unsigned int progGround = groundShader.createShaderProgram("vertexShaderGround.vs", "fragmentShaderGround.fs");
-    // groundShader.useProgram();
-    // groundShader.setInt("groundSampler", 2);
-    // glUniformMatrix4fv(glGetUniformLocation(progGround, "perspective"), 1, GL_FALSE, glm::value_ptr(projection));
 
     // Some settings
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Draws filled primitives
@@ -429,13 +327,7 @@ int main()
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, woodTexture);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, smileyTexture);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, grassTexture);
-
+        // Generates a new lookAt/view matrix
         cam.UpdateView();
 
         cubeShader.UseProgram();
@@ -443,7 +335,7 @@ int main()
         cubeShader.SetMatrix4fv("view", glm::value_ptr(cam.GetViewMat()));
         
         // Draw 10 cubes
-        glBindVertexArray(VAO1);
+        cube.Bind();
         for (size_t i = 0; i < 12; i++)
         {
             // The model matrix locates the primitives in space, therefore each primitive has its own model matrix (i.e., location)
@@ -453,28 +345,7 @@ int main()
             model = glm::scale(model, glm::vec3(0.5));
             cubeShader.SetMatrix4fv("model", glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
-        // groundShader.useProgram();
-        // groundShader.setInt("groundSampler", 2);
-        // glBindVertexArray(VAO2);
-        // float shift = 0.2;
-        // // Pass to next row
-        // for (size_t i = 0; i < 15; i++)
-        // {
-        //     // One row of grass
-        //     for (size_t j = 0; j < 10; j++)
-        //     {
-        //         glm::mat4 model = glm::mat4(1.0f);
-        //         model = glm::scale(model, glm::vec3(1.5, 1.5, 10));
-        //         model = glm::translate(model, glm::vec3(-0.9+shift*j, -0.9+shift*i,  1.0-i));
-        //         model = glm::rotate(model, glm::radians(-75.0f) ,glm::vec3(1.0, 0.0, 0.0));
-        //         glUniformMatrix4fv(glGetUniformLocation(progGround, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        //         glUniformMatrix4fv(glGetUniformLocation(progGround, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        //         glDrawArrays(GL_TRIANGLES, 0, 6);
-        //     }
-        // }
-        
+        }        
 
 #if IMGUI
         // Rendering
@@ -498,11 +369,11 @@ int main()
 #endif
 
     // Optional
-    glDeleteVertexArrays(1, &VAO1);
-    glDeleteBuffers(1, &VBO1);
-    glDeleteVertexArrays(1, &VAO2);
-    glDeleteBuffers(1, &VBO2);
-    glDeleteBuffers(1, &EBO2);
+    // glDeleteVertexArrays(1, &VAO1);
+    // glDeleteBuffers(1, &VBO1);
+    // glDeleteVertexArrays(1, &VAO2);
+    // glDeleteBuffers(1, &VBO2);
+    // glDeleteBuffers(1, &EBO2);
 
     // Not optional
     cubeShader.DeleteProgram();

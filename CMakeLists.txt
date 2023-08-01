@@ -17,11 +17,11 @@ message("Compiling with Microsoft Visual Compiler (MSVC)")
 add_definitions(-DWINDOWS_MSVC) # add_compile_definiftions does not work for this version of cmake
 
 add_executable(${EXE} 
-            # examples/transform_matrix_example.cpp
             src/main.cpp
             src/glad.c
             src/shader.cpp
             src/camera.cpp
+            src/item.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_opengl3.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_glfw.cpp
             # ${IMGUI_SRC_FILE}
@@ -57,6 +57,7 @@ add_executable(${EXE}
             src/main.cpp
             src/shader.cpp
             src/camera.cpp
+            src/item.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_opengl3.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_glfw.cpp
             # ${IMGUI_SRC_FILE}
