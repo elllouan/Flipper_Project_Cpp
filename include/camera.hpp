@@ -49,7 +49,7 @@ public:
     ~Camera() = default;
 
     glm::mat4 CreateView();
-    glm::mat4 Project(float width, float height, float near, float far, float fov);
+    glm::mat4 CreatePerspective(float width, float height, float near, float far, float fov);
     glm::mat4 ChangeView(const glm::vec3& newPosition, const glm::vec3& newTarget);
     glm::mat4 UpdateView();
     // glm::mat4 UpdatePerspective();
@@ -60,6 +60,8 @@ public:
     void SpinView(float yaw, float pitch);
     void ZoomView(float fov);
     void NodView(float time, float limitAngle = glm::radians(0.0f), bool right = true);
+
+    // void push(Item &item);
 
     const glm::mat4&
     GetViewMat() const

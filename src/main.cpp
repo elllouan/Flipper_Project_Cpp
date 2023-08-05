@@ -4,7 +4,9 @@
 
 #include "shader.hpp"
 #include "camera.hpp"
-#include "item.hpp"
+#include "itemBuffer.hpp"
+#include "entity.hpp"
+#include "environment.hpp"
 
 // turns the header to a .cpp
 #define STB_IMAGE_IMPLEMENTATION
@@ -54,90 +56,6 @@ void processInput(GLFWwindow *window);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-
-static std::string parseShaderFile(const std::string& fileName)
-{
-    std::string path = "C:\\Users\\Elouan THEOT\\Documents\\Programming\\c++\\Flipper_Project_Cpp\\shaders\\";
-    std::ifstream file(path+fileName);
-    std::string fileContent;
-
-    if (file)
-    {
-        std::string line;
-        while (std::getline(file, line))
-        {
-            fileContent += line + "\n";
-        }
-    }
-    else
-    {
-        std::cerr << "Failed to open file: " << fileName << std::endl;
-    }
-    return fileContent;
-}
-
-/*
- * @brief Compile the given shader.
- * @param shaderType Any type of shader (preferably use macros).
- * @param source Source code of the shader.
- * @return The shader's ID (unsigned int).
-*/
-static unsigned int CompileShader(unsigned int shaderType,
-    const std::string& source)
-{
-    unsigned int shaderId = glCreateShader(shaderType);
-    const char* shaderSrc = source.c_str();
-    glShaderSource(shaderId, 1, &shaderSrc, nullptr);
-    glCompileShader(shaderId);
-
-    // Shader Compilation Error Handling
-    int result;
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-        int length;
-        glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
-        // Allocate data dynamically on the stack with alloca
-        char* message = (char *)alloca(length * sizeof(char));
-        glGetShaderInfoLog(shaderId, length, &length, message);
-        std::cout << message << std::endl;
-    }
-    return shaderId;
-}
-
-/*
- * @brief Create (Compile/Attach/Link) the given shaders sources and a program.
- * @return A shader program (unsigned int).
-*/
-static unsigned int CreateShader(const std::string& vertexShader,
-    const std::string& fragmentShader)
-{
-    unsigned int shaderProgram = glCreateProgram();
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-    glAttachShader(shaderProgram, vs);
-    glAttachShader(shaderProgram, fs);
-    glLinkProgram(shaderProgram);
-
-    // Shader Link Error Handling
-    int success;
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        int length;
-        glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char *)alloca(length * sizeof(char));
-        glGetProgramInfoLog(shaderProgram, 512, NULL, message);
-        std::cout << message << std::endl;
-    }
-
-    glValidateProgram(shaderProgram);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return shaderProgram;
-}
 
 int main()
 {
@@ -254,48 +172,46 @@ int main()
         glm::vec3(15.0, 10.0, -10.0),
     };
 
-    float ground[] = {
-        -0.1, -0.1, 0.0, 0.0, 0.0,
-        -0.1,  0.1, 0.0, 0.0, 1.0,
-         0.1, -0.1, 0.0, 1.0, 0.0,
-
-        -0.1,  0.1, 0.0, 0.0, 1.0,
-         0.1,  0.1, 0.0, 1.0, 1.0,
-         0.1, -0.1, 0.0, 1.0, 0.0,
-    };
-
-    glm::vec3 tiles[] = {
-        glm::vec3(-0.9, -0.9,  1.0),
-        glm::vec3(-0.9, -0.9,  0.0),
-        glm::vec3(-0.9, -0.9, -1.0),
-        glm::vec3(-0.9, -0.9, -2.0),
-        glm::vec3(-0.9, -0.9, -3.0),
-        glm::vec3(-0.9, -0.9, -15.0),
-        glm::vec3(-0.9, -0.9, -18.0),
-        glm::vec3(-0.9, -0.9, -22.0),
-    };
-
-    // Create an item
-    unsigned int woodTexture, smileyTexture;
-    Item cube = Item(rectangles, sizeof(rectangles));
-    cube.EnableVertexAttrib(0, 3, 5*sizeof(float), 0);
-    cube.EnableVertexAttrib(1, 2, 5*sizeof(float), 3*sizeof(float));
-    cube.AddTexture2D(woodTexture, "container.jpg");
-    cube.AddTexture2D(smileyTexture, "smiley.jpg");
-    cube.BindTextures();
-
-    // Create shaders programs
-    Shader cubeShader = Shader();
-    unsigned int progCube = cubeShader.CreateShaderProgram("vertexShaderCubes.vs", "fragmentShaderCubes.fs");
-
-    cubeShader.UseProgram();
-    cubeShader.SetInt("woodSampler", 0); // woodSampler in the vertex shader is equal to the wood texture
-    cubeShader.SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
-
     // cam is declared global because it needs to be accessed from the callbacks
     cam.CreateView();
-    cam.Project(800.0f, 600.0f, near, far, fov);
-    cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
+    cam.CreatePerspective(800.0f, 600.0f, near, far, fov);
+
+    // Create an item: position, texture, color and more
+    unsigned int woodTexture, smileyTexture;
+    ItemBuffer cubeBuffer = ItemBuffer(rectangles, sizeof(rectangles));
+    // Adds position attribute
+    cubeBuffer.AddVertexAttrib(0, 3, 5*sizeof(float), 0);
+    // Adds texture attribute
+    cubeBuffer.AddVertexAttrib(1, 2, 5*sizeof(float), 3*sizeof(float));
+    // Sets textures
+    cubeBuffer.AddTexture2D(woodTexture, "container.jpg");
+    cubeBuffer.AddTexture2D(smileyTexture, "smiley.jpg");
+    // Binds textures to GL_TEXTURE (16 max) in the same order they were added: e.g., container is bound to GL_TEXTURE0
+    cubeBuffer.BindTextures();
+
+    // Create shaders programs
+    Shader shader = Shader();
+    shader.CreateShaderProgram("vertexShaderCubes.vs", "fragmentShaderCubes.fs");
+
+    // First, use the shader program
+    shader.UseProgram();
+
+    // Creates an environment that contains a camera, a shader and multiple entities (cubes here)
+    Environment environment = Environment(&cam, &shader);
+
+    // std::vector<Entity *> entities;
+
+    // Adds all entities here
+    for (size_t i = 0; i < 12; i++)
+    {
+        Entity cube = Entity(&cubeBuffer);
+        cube.Translate(positions[i]);
+        cube.Rotate((float)glfwGetTime(), positions[i]);
+        cube.Scale(glm::vec3(0.6));
+        environment.AddEntity(std::move(cube));
+    }
+
+    environment.Render((float)glfwGetTime());
 
     // Some settings
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Draws filled primitives
@@ -327,25 +243,16 @@ int main()
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Generates a new lookAt/view matrix
-        cam.UpdateView();
-
-        cubeShader.UseProgram();
-        cubeShader.SetMatrix4fv("perspective", glm::value_ptr(cam.GetPerspectiveMat()));
-        cubeShader.SetMatrix4fv("view", glm::value_ptr(cam.GetViewMat()));
-        
-        // Draw 10 cubes
-        cube.Bind();
         for (size_t i = 0; i < 12; i++)
         {
-            // The model matrix locates the primitives in space, therefore each primitive has its own model matrix (i.e., location)
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, positions[i]);
             model = glm::rotate(model, (float)glfwGetTime(), positions[i]);
-            model = glm::scale(model, glm::vec3(0.5));
-            cubeShader.SetMatrix4fv("model", glm::value_ptr(model));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }        
+            model = glm::scale(model, glm::vec3(0.6f));
+            environment.moveEntity(std::move(model), i+1);
+        }
+        
+        environment.Render((float)glfwGetTime());
 
 #if IMGUI
         // Rendering
@@ -367,16 +274,9 @@ int main()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 #endif
-
-    // Optional
-    // glDeleteVertexArrays(1, &VAO1);
-    // glDeleteBuffers(1, &VBO1);
-    // glDeleteVertexArrays(1, &VAO2);
-    // glDeleteBuffers(1, &VBO2);
-    // glDeleteBuffers(1, &EBO2);
-
+    
     // Not optional
-    cubeShader.DeleteProgram();
+    shader.DeleteProgram();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

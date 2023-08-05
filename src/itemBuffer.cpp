@@ -4,9 +4,15 @@
 #include <glad/glad.h>
 
 #include "stb_image.h"
-#include "item.hpp"
+#include "itemBuffer.hpp"
 
-Item::Item(void *vertexBuffer, int sizeBuffer, unsigned int *indices, int sizeIndices)
+// @brief Generates, binds and fills data buffers.
+// @param vertexBuffer Pointer to the Vertex Buffer Array (VBO).
+// @param sizeBuffer In bytes, the size of the vertexBuffer.
+// @param indices Pointer to the Element Buffer Array (EBO).
+// @param sizeIndices In bytes, the size of indices.
+// @note An EBO can be added (optional).
+ItemBuffer::ItemBuffer(void *vertexBuffer, int sizeBuffer, unsigned int *indices, int sizeIndices)
 {
     glGenVertexArrays(1, &m_VA0);
     glGenBuffers(1, &m_VBO);
@@ -24,38 +30,38 @@ Item::Item(void *vertexBuffer, int sizeBuffer, unsigned int *indices, int sizeIn
     m_buffer = vertexBuffer;
 }
 
-Item::~Item()
+ItemBuffer::~ItemBuffer()
 {
     glDeleteVertexArrays(1, &m_VA0);
     glDeleteBuffers(1, &m_VBO);
     glDeleteBuffers(1, &m_EB0);
 }
 
-void Item::EnableVertexAttrib(unsigned int index, unsigned int count, unsigned int stride, unsigned int offset)
+void ItemBuffer::AddVertexAttrib(unsigned int index, unsigned int count, unsigned int stride, unsigned int offset)
 {
     glVertexAttribPointer(index, count, GL_FLOAT, GL_FALSE, stride, (void *)offset);
     glEnableVertexAttribArray(index);
 }
 
-void Item::EnablePositionAttrib(int stride)
+void ItemBuffer::AddPositionAttrib(int stride)
 {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void *)0);
     glEnableVertexAttribArray(0);
 }
 
-void Item::EnableColorAttrib(int stride)
+void ItemBuffer::AddColorAttrib(int stride)
 {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
 }
 
-void Item::EnableTextureAttrib(int stride)
+void ItemBuffer::AddTextureAttrib(int stride)
 {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(5*sizeof(float)));
     glEnableVertexAttribArray(2);
 }
 
-void Item::AddTexture2D(unsigned int &id, const std::string &img, int wrappingParam, int filteringParam)
+void ItemBuffer::AddTexture2D(unsigned int &id, const std::string &img, int wrappingParam, int filteringParam)
 {
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
@@ -84,7 +90,7 @@ void Item::AddTexture2D(unsigned int &id, const std::string &img, int wrappingPa
     stbi_image_free(data);
 }
 
-void Item::BindTextures()
+void ItemBuffer::BindTextures()
 {
     for (int i=0; i<m_textures.size() && i<MAX_ACTIVE_TEXTURE; i++)
     {
@@ -94,17 +100,9 @@ void Item::BindTextures()
     
 }
 
-void Item::Bind()
+// @brief Binds the Vertex Array which vertices attributes are to be drawn.
+// @note Rely exclusively on glBindVertexArray().
+void ItemBuffer::Bind()
 {
     glBindVertexArray(m_VA0);
-}
-
-void Item::Draw(int count)
-{
-
-}
-
-void Item::Paint()
-{
-
 }

@@ -21,7 +21,9 @@ add_executable(${EXE}
             src/glad.c
             src/shader.cpp
             src/camera.cpp
-            src/item.cpp
+            src/itemBuffer.cpp
+            src/entity.cpp
+            src/environment.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_opengl3.cpp
             # ${IMGUI_ROOT_FOLDER}/backends/imgui_impl_glfw.cpp
             # ${IMGUI_SRC_FILE}
@@ -55,6 +57,8 @@ message("Compiling with GNU Compiler.")
 
 add_executable(${EXE} 
             src/main.cpp
+            # add glew ib
+            src/environment.cpp
             src/shader.cpp
             src/camera.cpp
             src/item.cpp

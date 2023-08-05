@@ -26,8 +26,8 @@ Clip(float n, float f, float r, float l, float t, float b)
     return glm::transpose(clip);
 }
 
-static glm::mat4
-MyLookAt(const glm::vec3 &target, const glm::vec3 &y, const glm::vec3 &position)
+// @brief Implements my own LookAt() method.
+static glm::mat4 MyLookAt(const glm::vec3 &target, const glm::vec3 &y, const glm::vec3 &position)
 {
     glm::vec3 direction = glm::normalize(position-target);
     glm::vec3 right = glm::normalize(glm::cross(y,direction));
@@ -41,17 +41,6 @@ MyLookAt(const glm::vec3 &target, const glm::vec3 &y, const glm::vec3 &position)
                                               0,           0,           1, 0,
                                     -position.x, -position.y, -position.z, 1);
     return base*translate;
-}
-
-void
-Camera::__SetBase()
-{
-    // Builds the new system (view system) where the camera is the origin
-    m_direction = glm::normalize(m_position-m_target);
-    m_right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), m_direction));
-    m_up = glm::normalize(glm::cross(m_direction, m_right));
-    // Generates a orthogonal-normalized coordinates system: base = (origin, z', x', y')
-    m_base = {m_position, m_direction, m_right, m_up};
 }
 
 Camera::Camera(glm::vec3 &initialPosition,
@@ -68,14 +57,27 @@ Camera::Camera(glm::vec3 &initialPosition,
     __SetBase();
 }
 
+// @brief Creates the camera's orthogonal base.
+void Camera::__SetBase()
+{
+    // Builds the new system (view system) where the camera is the origin
+    m_direction = glm::normalize(m_position-m_target);
+    m_right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), m_direction));
+    m_up = glm::normalize(glm::cross(m_direction, m_right));
+    // Generates a orthogonal-normalized coordinates system: base = (origin, z', x', y')
+    m_base = {m_position, m_direction, m_right, m_up};
+}
+
+// @brief Creates a matrix view based off the target and position vectors given at construction time.
+// @note Relies on glm::lookAt() (or on my own LookAt() implementation).
 glm::mat4 Camera::CreateView()
 {
-    // m_view = glm::lookAt(m_position, m_target, y);
-    m_view = MyLookAt(m_target, y, m_position);
+    m_view = glm::lookAt(m_position, m_target, y);
+    // m_view = MyLookAt(m_target, y, m_position);
     return m_view;
 }
 
-glm::mat4 Camera::Project(float width, float height, float near, float far, float fov)
+glm::mat4 Camera::CreatePerspective(float width, float height, float near, float far, float fov)
 {
     // TODO: Handling Error
     if (fov > MAX_ANGLE)
@@ -109,8 +111,8 @@ glm::mat4 Camera::ChangeView(const glm::vec3 &newPosition, const glm::vec3 &newT
 
 glm::mat4 Camera::UpdateView()
 {
-    // m_view = glm::lookAt(m_position, m_target, y);
-    m_view = MyLookAt(m_target, y, m_position);
+    m_view = glm::lookAt(m_position, m_target, y);
+    // m_view = MyLookAt(m_target, y, m_position);
     __SetBase();
     return m_view;
 }
@@ -153,6 +155,9 @@ void Camera::SpinView(float yaw, float pitch)
     m_target = m_position - m_direction;
 }
 
+// @brief Zooms the view in or out depending on the value of fov.
+// @param fov in degree.
+// @note Modifies the perspective matrix.
 void Camera::ZoomView(float fov)
 {
     // TODO: Handling Error
@@ -192,3 +197,7 @@ void Camera::NodView(float frameTime, float limitAngle, bool right)
     
     m_target = m_position-m_direction;
 }
+
+
+
+

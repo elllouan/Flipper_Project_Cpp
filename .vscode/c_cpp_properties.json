@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/dependencies/glm",
+                "${workspaceFolder}/dependencies/glew/include"
             ],
             "defines": [
                 "_DEBUG",
