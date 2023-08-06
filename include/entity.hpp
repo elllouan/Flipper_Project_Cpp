@@ -9,7 +9,7 @@ class Entity : public ItemBuffer
 private:
     ItemBuffer *m_buffer;
 
-    unsigned int m_boundary;
+    float m_boundary;
     glm::vec3 m_origin;
     glm::vec3 m_rotationAxis;
     float m_rotationAngle;
@@ -19,6 +19,7 @@ private:
 public:
     // Entity(ItemBuffer *buffer, glm::vec3 &translationAxis = glm::vec3(0.0f), glm::vec3 &rotationAxis = glm::vec3(0.0f));
     Entity(ItemBuffer *buffer,
+           float boundary,
            glm::vec3 &translationAxis = glm::vec3(0.0f),
            glm::vec3 &rotationAxis = glm::vec3(0.0f),
            float rotationAngle = 0.0f,

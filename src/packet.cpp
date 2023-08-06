@@ -1,6 +1,7 @@
 #include "packet.hpp"
 
 #include <utility>
+#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -59,17 +60,16 @@ void Packet::UpdateEntity(glm::vec3 &translationAxis, glm::vec3 &rotationAxis, f
     }
 }
 
-void Packet::CheckContact(float timeFrame, double x_mouse, double y_mouse)
+void Packet::CheckContact(float timeFrame, double x_mouse, double y_mouse, bool &click_mouse)
 {
     for (auto &entity: m_entities)
     {
-        if (entity.IsReachable(x_mouse, y_mouse, m_camera->GetTarget().z))
+        if (entity.IsReachable(x_mouse, y_mouse, m_camera->GetTarget().z) && click_mouse)
         {
+            std::cout << "DEBUG: IsReachable() = true.\n";
             entity.UpdateModel(m_camera->GetDirection(), glm::vec3(0.0f), timeFrame, glm::vec3(1.0f));
         }
-        
     }
-    
 }
 
 // @brief Renders every entity that is contained in the environment.

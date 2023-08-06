@@ -32,7 +32,7 @@ public:
                     glm::vec3 &scaleFactor = glm::vec3(1.0f),
                     int index = 0);
 
-    void CheckContact(float timeFrame, double x_mouse, double y_mouse);
+    void CheckContact(float timeFrame, double x_mouse, double y_mouse, bool &click_mouse);
     void Render(float timeFrame);
 };
 

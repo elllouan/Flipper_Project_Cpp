@@ -1,7 +1,15 @@
 #include "entity.hpp"
 
-Entity::Entity(ItemBuffer *buffer, glm::vec3 &translationAxis, glm::vec3 &rotationAxis, float rotationAngle, glm::vec3 &scaleFactor) : 
+#include <iostream>
+
+Entity::Entity(ItemBuffer *buffer,
+               float boundary,
+               glm::vec3 &translationAxis,
+               glm::vec3 &rotationAxis,
+               float rotationAngle,
+               glm::vec3 &scaleFactor) : 
     m_buffer {buffer},
+    m_boundary {boundary*scaleFactor.x},
     m_origin {translationAxis},
     m_rotationAxis {rotationAxis},
     m_rotationAngle {rotationAngle},
@@ -32,10 +40,17 @@ void Entity::Paint()
 
 bool Entity::IsReachable(double x_mouse, double y_mouse, float z_camera)
 {
+    // std::cout << "DEBUG: (x_mouse-x)*(x_mouse-x) = " << (x_mouse-x)*(x_mouse-x) <<".\n";
+    // std::cout << "DEBUG: (y_mouse-y)*(y_mouse-y) = " << (y_mouse-y)*(y_mouse-y) <<".\n";
+    // std::cout << "DEBUG: m_boundary*m_boundary = " << m_boundary*m_boundary <<".\n";
     if ((x_mouse-x)*(x_mouse-x) + (y_mouse-y)*(y_mouse-y) < m_boundary*m_boundary)
     {
-        if ((z-m_boundary < z_camera)  && (z_camera < z+m_boundary))
+        // std::cout << "DEBUG: z_camera = " << z_camera <<".\n";
+        // std::cout << "DEBUG: z-m_boundary = " << z-m_boundary <<".\n";
+        // std::cout << "DEBUG: z+m_boundary = " << z+m_boundary <<".\n";
+        if ((z-m_boundary < z_camera) && (z_camera < z+m_boundary))
         {
+            std::cout << "DEBUG: Depth = ok.\n";
             return true;
         }
     }

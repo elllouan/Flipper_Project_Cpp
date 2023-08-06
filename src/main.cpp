@@ -55,12 +55,30 @@ float far = 100.0f;
 float fov = 45.0f;
 
 double x_mouse, y_mouse;
+bool left_click_mouse, right_click_mouse;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+static double ClipMouseCursor(double pos_cursor, double max_pos)
+{
+    double new_pos = 2*(pos_cursor/max_pos) - 1;
+    if (new_pos < -1)
+    {
+        return -1.0;
+    }
+    else if (new_pos > 1)
+    {
+        return 1.0;
+    }
+    else
+    {
+        return new_pos;
+    }
+}
 
 int main()
 {
@@ -207,7 +225,7 @@ int main()
     // Adds all entities here
     for (size_t i = 0; i < 12; i++)
     {
-        Entity cube = Entity(&cubeBuffer, positions[i], positions[i], deltaTime, glm::vec3(0.6));
+        Entity cube = Entity(&cubeBuffer, 1.0f, positions[i], positions[i], deltaTime, glm::vec3(0.6));
         packet.AddEntity(std::move(cube));
     }
 
@@ -247,6 +265,7 @@ int main()
         {
             packet.UpdateEntity(glm::vec3(0.0f), glm::vec3(0.0f), deltaTime, glm::vec3(1.0f), i+1);
         }
+        packet.CheckContact(deltaTime, x_mouse, y_mouse, left_click_mouse);
         
         packet.Render(deltaTime);
 
@@ -317,8 +336,9 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
     // Update cursor last frame coordinates
     prev_xpos = xpos;
     prev_ypos = ypos;
-    x_mouse = xpos;
-    y_mouse = ypos;
+    x_mouse = ClipMouseCursor(xpos, static_cast<double>(width));
+    y_mouse = ClipMouseCursor(ypos, static_cast<double>(height));
+    std::cout << "DEBUG: x_mouse = " << x_mouse <<".\n";
 
     cam.SpinView(yaw, pitch);
     // (x_mouse - xentity)²+(y_mouse - yentity)² < bounding_radius
@@ -332,9 +352,15 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-        return;
+    {
+        right_click_mouse = right_click_mouse ? false : true;
+        std::cout << "DEBUG: Right click = " << right_click_mouse << ".\n";
+    }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-        return;
+    {
+        left_click_mouse = left_click_mouse ? false : true;
+        std::cout << "DEBUG: Left click = " << left_click_mouse << ".\n";
+    }
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
