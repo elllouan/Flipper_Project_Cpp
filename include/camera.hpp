@@ -75,6 +75,18 @@ public:
         return m_perspective;
     }
 
+    const glm::vec3&
+    GetTarget() const
+    {
+        return m_target;
+    }
+
+    const glm::vec3&
+    GetDirection()
+    {
+        return m_direction;
+    }
+
 };
 
 

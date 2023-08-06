@@ -6,7 +6,7 @@
 #include "camera.hpp"
 #include "itemBuffer.hpp"
 #include "entity.hpp"
-#include "environment.hpp"
+#include "packet.hpp"
 
 // turns the header to a .cpp
 #define STB_IMAGE_IMPLEMENTATION
@@ -35,6 +35,9 @@
 
 // Some global variables
 float yaw = 0.0, pitch = 0.0;
+glm::vec3 x = glm::vec3(1.0, 0.0, 0.0);
+glm::vec3 y = glm::vec3(0.0, 1.0, 0.0);
+glm::vec3 z = glm::vec3(0.0, 0.0, 1.0);
 glm::vec3 cameraPos = glm::vec3(0.0, 0.0, 3.0);
 glm::vec3 cameraFront = glm::vec3(0.0, 0.0, -1.0);
 glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
@@ -42,14 +45,16 @@ glm::vec3 cameraTarget = glm::vec3(0.0, 0.0, 2.0);
 // cam is declared global because it needs to be accessed from the callbacks
 Camera cam = Camera(cameraPos, cameraTarget);
 
-float deltaTime = 0.0;
-float lastTime = 0.0;
+float deltaTime = 0.0f;
+float lastTime = 0.0f;
 
 unsigned int width = 800;
 unsigned int height = 500;
 float near = 0.1f;
 float far = 100.0f;
 float fov = 45.0f;
+
+double x_mouse, y_mouse;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -196,22 +201,17 @@ int main()
     // First, use the shader program
     shader.UseProgram();
 
-    // Creates an environment that contains a camera, a shader and multiple entities (cubes here)
-    Environment environment = Environment(&cam, &shader);
-
-    // std::vector<Entity *> entities;
+    // Creates an packet that contains a camera, a shader and multiple entities (cubes here)
+    Packet packet = Packet(&cam, &shader);
 
     // Adds all entities here
     for (size_t i = 0; i < 12; i++)
     {
-        Entity cube = Entity(&cubeBuffer);
-        cube.Translate(positions[i]);
-        cube.Rotate((float)glfwGetTime(), positions[i]);
-        cube.Scale(glm::vec3(0.6));
-        environment.AddEntity(std::move(cube));
+        Entity cube = Entity(&cubeBuffer, positions[i], positions[i], deltaTime, glm::vec3(0.6));
+        packet.AddEntity(std::move(cube));
     }
 
-    environment.Render((float)glfwGetTime());
+    packet.Render(deltaTime);
 
     // Some settings
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Draws filled primitives
@@ -245,14 +245,10 @@ int main()
 
         for (size_t i = 0; i < 12; i++)
         {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, positions[i]);
-            model = glm::rotate(model, (float)glfwGetTime(), positions[i]);
-            model = glm::scale(model, glm::vec3(0.6f));
-            environment.moveEntity(std::move(model), i+1);
+            packet.UpdateEntity(glm::vec3(0.0f), glm::vec3(0.0f), deltaTime, glm::vec3(1.0f), i+1);
         }
         
-        environment.Render((float)glfwGetTime());
+        packet.Render(deltaTime);
 
 #if IMGUI
         // Rendering
@@ -321,8 +317,16 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
     // Update cursor last frame coordinates
     prev_xpos = xpos;
     prev_ypos = ypos;
+    x_mouse = xpos;
+    y_mouse = ypos;
 
     cam.SpinView(yaw, pitch);
+    // (x_mouse - xentity)²+(y_mouse - yentity)² < bounding_radius
+    // &&
+    // zentity-bounding_radius < target < zentity+bounding_radius
+
+    // ==> moveEntity(translate(direction))
+
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
