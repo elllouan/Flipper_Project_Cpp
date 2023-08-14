@@ -44,6 +44,7 @@ public:
     void SetInt(const std::string &name, int value, int size = 1) const;
     void SetFloat(const std::string &name, float *values, int size = 1) const;
     void SetMatrix4fv(const std::string &name, const float *mat4) const;
+    void SetVec3(const std::string &name, const float *vec3) const;
     
     unsigned int GetShaderProgram() const;
 };

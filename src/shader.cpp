@@ -149,6 +149,11 @@ void Shader::SetMatrix4fv(const std::string &name, const float *mat4) const
     glUniformMatrix4fv(glGetUniformLocation(m_program, name.c_str()), 1, GL_FALSE, mat4);
 }
 
+void Shader::SetVec3(const std::string &name, const float *vec3) const
+{
+    glUniform3fv(glGetUniformLocation(m_program, name.c_str()), 1, vec3);
+}
+
 /* --------------- Getter & Setter Functions --------------- */
 
 unsigned int 

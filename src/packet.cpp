@@ -80,8 +80,11 @@ void Packet::Render(float timeFrame)
     m_shader->UseProgram();
 
     // Then, update uniforms
-    m_shader->SetInt("woodSampler", 0); // woodSampler in the vertex shader is equal to the wood texture
-    m_shader->SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
+    // m_shader->SetInt("woodSampler", 0); // woodSampler in the vertex shader is equal to the wood texture
+    // m_shader->SetInt("smileySampler", 1); // smileySampler in the vertex shader is equal to the smiley texture
+
+    // m_shader->SetFloat("objectColor", objColor, 3);
+    // m_shader->SetFloat("lightColor", lightColor, 3);
 
     m_shader->SetMatrix4fv("view", glm::value_ptr(m_camera->GetViewMat()));
     m_shader->SetMatrix4fv("perspective", glm::value_ptr(m_camera->GetPerspectiveMat()));

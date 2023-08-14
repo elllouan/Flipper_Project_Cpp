@@ -165,16 +165,11 @@ int main()
     };
 
     glm::vec3 positions[] = {
-        glm::vec3(0.0, 0.0, 0.0),
-        glm::vec3(0.5, 0.5, -0.5),
-        glm::vec3(-0.5, 0.7, 0.1),
-        glm::vec3(0.0, -0.5, 0.5),
+        glm::vec3(0.0, 0.0, -5.0),
+        glm::vec3(10, 15, -9.5),
+        glm::vec3(-13.0, 5.0, -10.5),
+        glm::vec3(-4.0, -3.5, -15.5),
         glm::vec3(3.0, -2.0, -14.0),
-        glm::vec3(0.0, 0.0, -4.0),
-        glm::vec3(-5.0, 0.5, -0.5),
-        glm::vec3(5.0, 6.7, -5.0),
-        glm::vec3(-10.0, -17, -5.0),
-        glm::vec3(15.0, 10.0, -10.0),
     };
 
     // cam is declared global because it needs to be accessed from the callbacks
@@ -183,35 +178,53 @@ int main()
 
     // Create an item: position, texture, color and more
     unsigned int woodTexture, smileyTexture;
-    ItemBuffer cubeBuffer = ItemBuffer(rectangles, sizeof(rectangles));
+    ItemBuffer cubeBuffer = ItemBuffer(rectangles, sizeof(rectangles));   
     // Adds position attribute
     cubeBuffer.AddVertexAttrib(0, 3, 5*sizeof(float), 0);
     // Adds texture attribute
-    cubeBuffer.AddVertexAttrib(1, 2, 5*sizeof(float), 3*sizeof(float));
+    // cubeBuffer.AddVertexAttrib(1, 2, 5*sizeof(float), 3*sizeof(float));
     // Sets textures
-    cubeBuffer.AddTexture2D(woodTexture, "container.jpg");
-    cubeBuffer.AddTexture2D(smileyTexture, "smiley.jpg");
+    // cubeBuffer.AddTexture2D(woodTexture, "container.jpg");
+    // cubeBuffer.AddTexture2D(smileyTexture, "smiley.jpg");
     // Binds textures to GL_TEXTURE (16 max) in the same order they were added: e.g., container is bound to GL_TEXTURE0
-    cubeBuffer.BindTextures();
+    // cubeBuffer.BindTextures();
 
     // Create shaders programs
-    Shader shader = Shader();
-    shader.CreateShaderProgram("vertexShaderCubes.vs", "fragmentShaderCubes.fs");
+    Shader cubeShader = Shader();
+    cubeShader.CreateShaderProgram("vShaderCube.vs", "fShaderCube.fs");
 
-    // First, use the shader program
-    shader.UseProgram();
+    // First, use the cubeShader program
+    float objColor[3] = {1.0f, 0.5f, 0.31f};
+    float lightColor[3] = {1.0f, 0.8f, 0.7f};
 
-    // Creates an packet that contains a camera, a shader and multiple entities (cubes here)
-    Packet packet = Packet(&cam, &shader);
+    // Creates a cubePacket that contains a camera, a shader and some entities (cubes here)
+    Packet cubePacket = Packet(&cam, &cubeShader);
+    // Packet lightPacket = Packet(&cam, &lightShader);
+
+    cubeShader.UseProgram();
+    cubeShader.SetFloat("objectColor", objColor, 3);
+    cubeShader.SetFloat("lightColor", lightColor, 3);
 
     // Adds all entities here
-    for (size_t i = 0; i < 12; i++)
+    for (size_t i = 0; i < 5; i++)
     {
         Entity cube = Entity(&cubeBuffer, positions[i], positions[i], deltaTime, glm::vec3(0.6));
-        packet.AddEntity(std::move(cube));
+        cubePacket.AddEntity(std::move(cube));
     }
+    cubePacket.Render(deltaTime);
 
-    packet.Render(deltaTime);
+    // Same process with the light source entity
+    ItemBuffer lightsourceBuffer = ItemBuffer(rectangles, sizeof(rectangles));
+    lightsourceBuffer.AddVertexAttrib(0, 3, 5*sizeof(float), 0);
+    Shader lightShader = Shader();
+    lightShader.CreateShaderProgram("vShaderLightSource.vs", "fShaderLightSource.fs");
+
+    Packet lightPacket = Packet(&cam, &lightShader);
+
+    glm::vec3 lightPos(3.2f, 2.0f, -2.0f);
+    Entity lightcube = Entity(&lightsourceBuffer, lightPos, glm::vec3(0.0f), 0.0f, glm::vec3(0.5f));
+    lightPacket.AddEntity(std::move(lightcube));
+    lightPacket.Render(deltaTime);
 
     // Some settings
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Draws filled primitives
@@ -243,12 +256,13 @@ int main()
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        for (size_t i = 0; i < 12; i++)
+        for (size_t index = 0; index < 5; index++)
         {
-            packet.UpdateEntity(glm::vec3(0.0f), glm::vec3(0.0f), deltaTime, glm::vec3(1.0f), i+1);
+            cubePacket.UpdateEntity(glm::vec3(0.0f), glm::vec3(0.0f), deltaTime, glm::vec3(1.0f), index+1);
         }
-        
-        packet.Render(deltaTime);
+        cubePacket.Render(deltaTime);
+
+        lightPacket.Render(deltaTime);
 
 #if IMGUI
         // Rendering
@@ -272,7 +286,8 @@ int main()
 #endif
     
     // Not optional
-    shader.DeleteProgram();
+    // cubeShader.DeleteProgram();
+    // lightShader.DeleteProgram();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
