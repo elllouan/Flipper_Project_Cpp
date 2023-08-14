@@ -20,7 +20,7 @@ public:
     // Entity(ItemBuffer *buffer, glm::vec3 &translationAxis = glm::vec3(0.0f), glm::vec3 &rotationAxis = glm::vec3(0.0f));
     Entity(ItemBuffer *buffer,
            glm::vec3 &translationAxis = glm::vec3(0.0f),
-           glm::vec3 &rotationAxis = glm::vec3(0.0f),
+           glm::vec3 &rotationAxis = glm::vec3(0.0f, 0.0f, 1.0f),
            float rotationAngle = 0.0f,
            glm::vec3 &scaleFactor = glm::vec3(1.0f));
     ~Entity() = default;

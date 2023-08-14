@@ -181,6 +181,10 @@ int main()
     ItemBuffer cubeBuffer = ItemBuffer(rectangles, sizeof(rectangles));   
     // Adds position attribute
     cubeBuffer.AddVertexAttrib(0, 3, 5*sizeof(float), 0);
+    // Same process with the light source entity
+    ItemBuffer lightsourceBuffer = ItemBuffer(rectangles, sizeof(rectangles));
+    lightsourceBuffer.AddVertexAttrib(0, 3, 5*sizeof(float), 0);
+    
     // Adds texture attribute
     // cubeBuffer.AddVertexAttrib(1, 2, 5*sizeof(float), 3*sizeof(float));
     // Sets textures
@@ -192,14 +196,16 @@ int main()
     // Create shaders programs
     Shader cubeShader = Shader();
     cubeShader.CreateShaderProgram("vShaderCube.vs", "fShaderCube.fs");
+    Shader lightShader = Shader();
+    lightShader.CreateShaderProgram("vShaderLightSource.vs", "fShaderLightSource.fs");
 
     // First, use the cubeShader program
-    float objColor[3] = {1.0f, 0.5f, 0.31f};
-    float lightColor[3] = {1.0f, 0.8f, 0.7f};
+    float objColor[3] = {1.0f, 0.5f, 0.51f};
+    float lightColor[3] = {1.0f, 1.0f, 1.0f};
 
     // Creates a cubePacket that contains a camera, a shader and some entities (cubes here)
+    Packet lightPacket = Packet(&cam, &lightShader);
     Packet cubePacket = Packet(&cam, &cubeShader);
-    // Packet lightPacket = Packet(&cam, &lightShader);
 
     cubeShader.UseProgram();
     cubeShader.SetFloat("objectColor", objColor, 3);
@@ -213,16 +219,8 @@ int main()
     }
     cubePacket.Render(deltaTime);
 
-    // Same process with the light source entity
-    ItemBuffer lightsourceBuffer = ItemBuffer(rectangles, sizeof(rectangles));
-    lightsourceBuffer.AddVertexAttrib(0, 3, 5*sizeof(float), 0);
-    Shader lightShader = Shader();
-    lightShader.CreateShaderProgram("vShaderLightSource.vs", "fShaderLightSource.fs");
-
-    Packet lightPacket = Packet(&cam, &lightShader);
-
-    glm::vec3 lightPos(3.2f, 2.0f, -2.0f);
-    Entity lightcube = Entity(&lightsourceBuffer, lightPos, glm::vec3(0.0f), 0.0f, glm::vec3(0.5f));
+    glm::vec3 lightPos(2.0f, 1.0f, -2.0f);
+    Entity lightcube = Entity(&lightsourceBuffer, lightPos, z, 0.0f, glm::vec3(0.5f));
     lightPacket.AddEntity(std::move(lightcube));
     lightPacket.Render(deltaTime);
 

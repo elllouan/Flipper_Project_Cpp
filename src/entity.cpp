@@ -1,5 +1,6 @@
 #include "entity.hpp"
 
+// @param rotationAngle in deg
 Entity::Entity(ItemBuffer *buffer, glm::vec3 &translationAxis, glm::vec3 &rotationAxis, float rotationAngle, glm::vec3 &scaleFactor) : 
     m_buffer {buffer},
     m_origin {translationAxis},
@@ -9,7 +10,10 @@ Entity::Entity(ItemBuffer *buffer, glm::vec3 &translationAxis, glm::vec3 &rotati
 {
     m_model = glm::mat4(1.0f);
     m_model = glm::translate(m_model, m_origin);
-    m_model = glm::rotate(m_model, glm::radians(rotationAngle), m_rotationAxis);
+    if (rotationAxis != glm::vec3(0.0f))
+    {
+        m_model = glm::rotate(m_model, glm::radians(rotationAngle), m_rotationAxis);
+    }
     m_model = glm::scale(m_model, m_scaleFactor);
     x = m_origin.x;
     y = m_origin.y;
